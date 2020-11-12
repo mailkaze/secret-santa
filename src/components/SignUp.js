@@ -76,6 +76,7 @@ export default function SignUp() {
             setPassword1('')
             setPassword2('')
             dispatch(toggleShowSignUp())
+            // TODO: crear el usuario en la base de datos
           })
         } else {
           console.log('La contraseña debe tener al menos 8 caracteres')
