@@ -9,7 +9,7 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
-import { auth } from '../firebase'
+import { auth, db } from '../firebase'
 import { toggleShowSignUp } from '../redux/actions'
 import { useDispatch } from 'react-redux'
 
@@ -76,17 +76,30 @@ export default function SignUp() {
             setPassword1('')
             setPassword2('')
             dispatch(toggleShowSignUp())
-            // TODO: crear el usuario en la base de datos
+            
+            const newUser = {
+              name: name,
+              groups: [],
+              wishes: {},
+              ratigns: {}
+            }
+            await db.collection('users').doc(userCredential.user.uid).set(newUser)
+          })
+          .catch(error => {
+            // TODO: errores del lado del servidor
           })
         } else {
           console.log('La contraseña debe tener al menos 8 caracteres')
           // TODO: mostrar los errores al usuario
+          setError(true)
         }
       } else {
         console.log('las contraseñas no son iguales')
+        setError(true)
       }
     } else {
       console.log('algunos campos están vacíos')
+      setError(true)
     }
   }
 
@@ -171,6 +184,9 @@ export default function SignUp() {
             </Grid>
           </Grid>
         </form>
+        {
+          error && <p>*revisa que los datos sean correctos.</p>
+        }
       </div>
     </Container>
   );

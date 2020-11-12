@@ -4,6 +4,8 @@ import Modal from '@material-ui/core/Modal';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import NewGroupButton from './NewGroupButton';
+import { db } from '../firebase'
+import { useSelector } from 'react-redux'
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -30,6 +32,8 @@ export default function NewGroupModal() {
   const classes = useStyles();
   // getModalStyle is not a pure function, we roll the style only on the first render
   const [open, setOpen] = React.useState(false);
+  const [groupName, setGroupName] = React.useState('')
+  const user = useSelector(state => state.user)
 
   const handleOpen = () => {
     setOpen(true);
@@ -39,11 +43,59 @@ export default function NewGroupModal() {
     setOpen(false);
   };
 
+  function handleChange(e) {
+    setGroupName(e.target.value)
+  }
+
+  function handleCreate(e) {
+    e.preventDefault()
+
+    const groupRef = db.collection('groups').doc(groupName)
+
+    groupRef.get()
+    .then((docSnapshot) => {
+      if (!docSnapshot.exists) {
+        // si el grupo no existe:
+        const newGroup = {
+          admin: user.uid,
+          users: [user.uid],
+          requests: [],
+          giversReceivers: {},
+          created: Date.now()
+        }
+        groupRef.set(newGroup)
+        .then(() => {
+          setGroupName('')
+          handleClose()
+        })
+        .catch(error => {
+          console.log(error)
+        })
+      } else {
+        // TODO: Avisar de que ya existe un grupo con ese nombre
+        console.log('Ya existe un grupo con ese nombre')
+      }
+    })
+  }
+
   const body = (
     <div className={classes.paper}>
-      <form className={classes.root} noValidate autoComplete="off" style={{margin: 'auto'}} >
-        <TextField id="standard-basic" label="Nombre del grupo" className={classes.input} />
-        <Button variant="contained" color="primary" style={{margin: 'auto'}} >
+      <form className={classes.root} autoComplete="off" style={{margin: 'auto'}} onSubmit={handleCreate} >
+        <TextField 
+          id="standard-basic" 
+          label="Nombre del grupo" 
+          className={classes.input} 
+          onChange={handleChange} 
+          value={groupName}
+          required
+          autoFocus
+        />
+        <Button 
+          type="submit"
+          variant="contained" 
+          color="primary" 
+          style={{margin: 'auto'}}
+        >
           Crear Grupo
         </Button>
       </form>
