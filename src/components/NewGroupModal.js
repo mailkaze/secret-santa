@@ -6,6 +6,7 @@ import Button from '@material-ui/core/Button';
 import NewGroupButton from './NewGroupButton';
 import { db } from '../firebase'
 import { useSelector } from 'react-redux'
+import firebase from 'firebase'
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -63,7 +64,14 @@ export default function NewGroupModal() {
           giversReceivers: {},
           created: Date.now()
         }
+
         groupRef.set(newGroup)
+        .catch(error => {
+          console.log(error)
+        })
+
+        //guardamos el id del grupo en el array de grupos del usuario:
+        db.collection('users').doc(user.uid).update({groups: firebase.firestore.FieldValue.arrayUnion(groupName)})
         .then(() => {
           setGroupName('')
           handleClose()

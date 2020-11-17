@@ -16,3 +16,23 @@ export function toggleShowLogin() {
     type: 'TOGGLE_SHOW_LOGIN',
   }
 }
+
+export function toggleShowDashboard() {
+  return {
+    type: 'TOGGLE_SHOW_DASHBOARD',
+  }
+}
+
+export function setSelectedGroup(groupData) {
+  return {
+    type: 'SET_SELECTED_GROUP',
+    payload: groupData
+  }
+}
+
+export function setSearch(search) {
+  return {
+    type: 'SET_SEARCH',
+    payload: search
+  }
+}
