@@ -20,12 +20,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('selectedGroup:', selectedGroup)
-  }, [])
+  }, [selectedGroup])
 
   return (
     <DashboardStyled>
       <p onClick={handleClose}>cerrar grupo</p>
       <p>esto es el dashboard del grupo {selectedGroup.groupName}</p>
+      <p>members: {selectedGroup.users} </p>
+      <p>requests: {selectedGroup.requests} </p>
     </DashboardStyled>
   )
 }

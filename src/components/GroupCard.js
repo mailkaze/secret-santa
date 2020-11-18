@@ -9,6 +9,7 @@ import { Icon } from '@material-ui/core';
 import { useSelector, useDispatch } from 'react-redux'
 import { toggleShowDashboard, setSelectedGroup } from '../redux/actions'
 import { db } from '../firebase'
+import firebase from 'firebase'
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -28,11 +29,12 @@ export default function GroupCard({groupName}) {
   const dispatch = useDispatch()
 
   function handleClick() {
+    // if(e.target !== e.currentTarget) return;
     if (member) {
       getGroupData()
       dispatch(toggleShowDashboard())
     } else {
-      console.log('acceso denegado a estee grupo')
+      console.log('acceso denegado a este grupo')
     }
   }
 
@@ -45,10 +47,39 @@ export default function GroupCard({groupName}) {
 
   function checkMember() {
     if (user.groups.includes(groupName)) {
-      return 'clear'
+      return 'clear' // eres miembro
     } else {
-      return 'person_add'
+      if (user.requests.includes(groupName)) {
+        return 'how_to_reg' // solicitud enviada
+      } else {
+        return 'person_add' // no eres miembro
+      }
     }
+  }
+
+  function handleMembership() {
+    const groupReference = db.collection('groups').doc(groupName)
+    const userReference = db.collection('users').doc(user.uid)
+
+    if (member) {
+      // salir del grupo
+      if (window.confirm('¿Abandonar de este grupo?')) {
+        console.log('borrándome del grupo', groupName, 'con el usuario', user.uid)
+        // TODO: aquí comprobamos si eres admin de este grupo, de ser así, pregunta de nuevo si quieres distruirlo.
+        groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
+        userReference.update({groups: firebase.firestore.FieldValue.arrayRemove(groupName)})
+      }
+    } else {
+      if (user.requests.includes(groupName)) {
+        // TODO: cancelar solicitud
+      } else {
+        // enviar solicitud
+        console.log('Enviando solicitud al grupo', groupName, 'con el usuario', user.uid)
+        groupReference.update({requests: firebase.firestore.FieldValue.arrayUnion(user.uid)})
+        userReference.update({requests: firebase.firestore.FieldValue.arrayUnion(groupName)})
+      }
+    }
+    dispatch(toggleShowDashboard()) // previene que se abra el dashboard al pulsar el botón.
   }
 
   return (
@@ -60,7 +91,7 @@ export default function GroupCard({groupName}) {
           </Avatar>
         }
         action={
-          <IconButton aria-label="settings">
+          <IconButton aria-label="settings"  onClick={handleMembership} >
             <Icon>{icon}</Icon>
           </IconButton>
         }
