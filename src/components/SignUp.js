@@ -79,9 +79,11 @@ export default function SignUp() {
             
             const newUser = {
               name: name,
+              email: userCredential.user.email,
               groups: [],
               wishes: {},
-              ratigns: {}
+              ratigns: {},
+              requests: []
             }
             await db.collection('users').doc(userCredential.user.uid).set(newUser)
           })
