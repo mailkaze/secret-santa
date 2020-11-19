@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { useSelector, useDispatch } from 'react-redux'
-import { setSelectedGroup, toggleShowDashboard } from  '../redux/actions'
+import { setSelectedGroup, setShowDashboard } from  '../redux/actions'
 import SimpleList from './List'
 import Button from '@material-ui/core/Button';
 import { Icon } from '@material-ui/core';
@@ -25,15 +25,14 @@ export default function Dashboard() {
 
   function handleClose() {
     dispatch(setSelectedGroup({}))
-    dispatch(toggleShowDashboard())
+    dispatch(setShowDashboard(false))
   }
 
   function getUsers() {
     setUsers([])
 
     selectedGroup.users.forEach(userId => {
-      db.collection('users').doc(userId).get()
-      .then(doc => {
+      db.collection('users').doc(userId).onSnapshot(doc => {
         const user = {...doc.data(), uid: userId }
         setUsers(users => [...users, user])
       })
@@ -44,8 +43,7 @@ export default function Dashboard() {
     setRequesters([])
 
     selectedGroup.requests.forEach(userId => {
-      db.collection('users').doc(userId).get()
-      .then(doc => {
+      db.collection('users').doc(userId).onSnapshot(doc => {
         const requester = {...doc.data(), uid: userId }
         setRequesters([...requesters, requester])
       })
@@ -62,8 +60,10 @@ export default function Dashboard() {
   }, [selectedGroup])
 
   useEffect(() => {
-    console.log(users)
-  },[users])
+    return () => {
+      dispatch(setShowDashboard(false))
+    }
+  }, [])
 
   return (
     <DashboardStyled>

@@ -17,9 +17,10 @@ export function toggleShowLogin() {
   }
 }
 
-export function toggleShowDashboard() {
+export function setShowDashboard(show) {
   return {
-    type: 'TOGGLE_SHOW_DASHBOARD',
+    type: 'SET_SHOW_DASHBOARD',
+    payload: show
   }
 }
 

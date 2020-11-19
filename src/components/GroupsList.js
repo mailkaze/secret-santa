@@ -24,8 +24,9 @@ export default function GroupsList() {
     setGroupNames([])
 
     if (search === '') { // No se está buscando nada, traemos la lista de nombres de grupos de los datos de usuario
-      db.collection('users').doc(user.uid).get()
-      .then(doc => {
+      // hacemos una escucha a la db en lugar de traer los datos sin más, para que se actualice la lista al realizar cambios
+      
+      db.collection('users').doc(user.uid).onSnapshot(doc => {
         const groupIds = doc.data().groups
         setGroupNames(groupIds)
       })

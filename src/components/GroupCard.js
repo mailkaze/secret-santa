@@ -7,7 +7,7 @@ import IconButton from '@material-ui/core/IconButton';
 import { red } from '@material-ui/core/colors';
 import { Icon } from '@material-ui/core';
 import { useSelector, useDispatch } from 'react-redux'
-import { toggleShowDashboard, setSelectedGroup } from '../redux/actions'
+import { setShowDashboard, setSelectedGroup, setSearch } from '../redux/actions'
 import { db } from '../firebase'
 import firebase from 'firebase'
 
@@ -32,7 +32,8 @@ export default function GroupCard({groupName}) {
     // if(e.target !== e.currentTarget) return;
     if (member) {
       getGroupData()
-      dispatch(toggleShowDashboard())
+      dispatch(setShowDashboard(true))
+      dispatch(setSearch(''))
     } else {
       console.log('acceso denegado a este grupo')
     }
@@ -57,7 +58,9 @@ export default function GroupCard({groupName}) {
     }
   }
 
-  function handleMembership() {
+  function handleMembership(e) {
+    e.stopPropagation()// previene que se abra el dashboard al pulsar el botón.
+
     const groupReference = db.collection('groups').doc(groupName)
     const userReference = db.collection('users').doc(user.uid)
 
@@ -79,7 +82,7 @@ export default function GroupCard({groupName}) {
         userReference.update({requests: firebase.firestore.FieldValue.arrayUnion(groupName)})
       }
     }
-    dispatch(toggleShowDashboard()) // previene que se abra el dashboard al pulsar el botón.
+    
   }
 
   return (
