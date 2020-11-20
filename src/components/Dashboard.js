@@ -45,10 +45,13 @@ export default function Dashboard() {
     selectedGroup.requests.forEach(userId => {
       db.collection('users').doc(userId).onSnapshot(doc => {
         const requester = {...doc.data(), uid: userId }
-        setRequesters([...requesters, requester])
+        setRequesters(requesters => [...requesters, requester])
       })
     })
   }
+
+  useEffect(() => {
+  },[users, requesters])
 
   useEffect(() => {
     // si ya tenemos los datos del grupo, podemos traer los de sus personas:
@@ -60,7 +63,7 @@ export default function Dashboard() {
   }, [selectedGroup])
 
   useEffect(() => {
-    return () => {
+    return () => { // al desmontar el componente:
       dispatch(setShowDashboard(false))
     }
   }, [])

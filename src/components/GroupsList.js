@@ -55,7 +55,7 @@ export default function GroupsList() {
       <SearchField />
       <NewGroupModal />
       <div className={classes.list}>
-        <p>Grupos a los que perteneces:</p>
+        <h4>Grupos:</h4>
         {groupNames.map(g => <GroupCard groupName={g} key={g}/>)}
       </div>
     </div>

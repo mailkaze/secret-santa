@@ -38,6 +38,7 @@ export default function SimpleList({people, member}) {
       // TODO: comprobar que no seas tú mismo
       if (window.confirm('¿Eliminar a esta persona del grupo?')) {
         // borrar su id de users
+        // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
         db.collection('groups').doc(selectedGroup.groupName).update({
           users: firebase.firestore.FieldValue.arrayRemove(e.target.id),
         })
@@ -48,6 +49,7 @@ export default function SimpleList({people, member}) {
       }
     } else {
       // añadir su id a users y quitarlo de requests
+      // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
       db.collection('groups').doc(selectedGroup.groupName).update({
         users: firebase.firestore.FieldValue.arrayUnion(e.target.id),
         requests: firebase.firestore.FieldValue.arrayRemove(e.target.id)

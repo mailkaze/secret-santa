@@ -75,13 +75,14 @@ export default function NewGroupModal() {
         .then(() => {
           setGroupName('')
           handleClose()
+
         })
         .catch(error => {
           console.log(error)
         })
       } else {
-        // TODO: Avisar de que ya existe un grupo con ese nombre
-        console.log('Ya existe un grupo con ese nombre')
+        alert('Ya existe un grupo con ese nombre')
+        setGroupName('')
       }
     })
   }

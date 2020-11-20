@@ -29,8 +29,8 @@ export default function GroupCard({groupName}) {
   const dispatch = useDispatch()
 
   function handleClick() {
-    // if(e.target !== e.currentTarget) return;
     if (member) {
+      console.log(user)
       getGroupData()
       dispatch(setShowDashboard(true))
       dispatch(setSearch(''))
@@ -40,8 +40,7 @@ export default function GroupCard({groupName}) {
   }
 
   function getGroupData() {
-    db.collection('groups').doc(groupName).get()
-    .then(doc => {
+    db.collection('groups').doc(groupName).onSnapshot(doc => {
       dispatch(setSelectedGroup({...doc.data(), groupName: groupName}))
     })
   }
@@ -60,7 +59,7 @@ export default function GroupCard({groupName}) {
 
   function handleMembership(e) {
     e.stopPropagation()// previene que se abra el dashboard al pulsar el botón.
-
+    
     const groupReference = db.collection('groups').doc(groupName)
     const userReference = db.collection('users').doc(user.uid)
 
@@ -71,15 +70,20 @@ export default function GroupCard({groupName}) {
         // TODO: aquí comprobamos si eres admin de este grupo, de ser así, pregunta de nuevo si quieres distruirlo.
         groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
         userReference.update({groups: firebase.firestore.FieldValue.arrayRemove(groupName)})
+        dispatch(setSearch(''))
       }
     } else {
       if (user.requests.includes(groupName)) {
-        // TODO: cancelar solicitud
+        if (window.confirm('¿Cancelar solicitud?')) {
+          // TODO: cancelar solicitud
+          dispatch(setSearch(''))
+        }
       } else {
         // enviar solicitud
         console.log('Enviando solicitud al grupo', groupName, 'con el usuario', user.uid)
         groupReference.update({requests: firebase.firestore.FieldValue.arrayUnion(user.uid)})
         userReference.update({requests: firebase.firestore.FieldValue.arrayUnion(groupName)})
+        dispatch(setSearch(''))
       }
     }
     

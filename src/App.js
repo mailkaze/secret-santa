@@ -19,8 +19,7 @@ function App() {
   function authStateListener() {
     auth.onAuthStateChanged(userData => {
       if (userData) {
-        db.collection('users').doc(userData.uid).get()
-        .then(doc => {
+        db.collection('users').doc(userData.uid).onSnapshot(doc => {
           dispatch(setUser({...doc.data(), uid: doc.id}))
           console.log('User:', {...doc.data(), uid: doc.id})
         })
