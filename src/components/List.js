@@ -1,10 +1,12 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Divider from '@material-ui/core/Divider';
+import Tooltip from '@material-ui/core/Tooltip';
+import Zoom from '@material-ui/core/Zoom';
 import { Icon } from '@material-ui/core';
 import { db } from '../firebase'
 import { useSelector } from 'react-redux'
@@ -18,47 +20,53 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SimpleList({people, member}) {
+export default function SimpleList({people, member, isAdmin}) {
   const classes = useStyles();
-  const icon = checkMember()
-  const selectedGroup = useSelector(state => state.selectedGroup)
+  const button = checkMember()
+  const selectedGroup = useSelector(state => state.selectedGroup)  
 
   function checkMember() {
-    // TODO: primero comprobar si eres admin para ver estas opciones
-    if (member) {
-      return 'person_remove_alt_1'
-    } else {
-      return 'person_add_alt_1'
+    if (isAdmin) {
+      if (member) {
+        return 'person_remove_alt_1'
+      } else {
+        return 'person_add_alt_1'
+      }
     }
+    return 'person'
   }
 
   function handleClick(e) {
-    if (member) {
-      //borar usuario
-      // TODO: comprobar que no seas tú mismo
-      if (window.confirm('¿Eliminar a esta persona del grupo?')) {
-        // borrar su id de users
+    const groupName = selectedGroup.groupName
+    if (isAdmin) {
+      if (member) {
+        //borar usuario
+        // TODO: comprobar que no seas tú mismo
+        if (window.confirm('¿Eliminar a esta persona del grupo?')) {
+          // borrar su id de users
+          // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
+          db.collection('groups').doc(groupName).update({
+            users: firebase.firestore.FieldValue.arrayRemove(e.target.id),
+          })
+          // borrar el nombre de selectedGroup de groups del usuario
+          db.collection('users').doc(e.target.id).update({
+            groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+          })
+        }
+      } else {
+        // añadir su id a users y quitarlo de requests
         // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
-        db.collection('groups').doc(selectedGroup.groupName).update({
-          users: firebase.firestore.FieldValue.arrayRemove(e.target.id),
+        db.collection('groups').doc(groupName).update({
+          users: firebase.firestore.FieldValue.arrayUnion(e.target.id),
+          requests: firebase.firestore.FieldValue.arrayRemove(e.target.id)
         })
-        // borrar el nombre de selectedGroup de groups del usuario
+        // añadir el nombre de selectedGroup a groups del usuario y borrarlo de requests
         db.collection('users').doc(e.target.id).update({
-          groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
+          groups: firebase.firestore.FieldValue.arrayUnion(groupName),
+          requests: firebase.firestore.FieldValue.arrayRemove(groupName),
+          [`wishes.${groupName}`]: '¡Cualquier cosa!'
         })
       }
-    } else {
-      // añadir su id a users y quitarlo de requests
-      // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
-      db.collection('groups').doc(selectedGroup.groupName).update({
-        users: firebase.firestore.FieldValue.arrayUnion(e.target.id),
-        requests: firebase.firestore.FieldValue.arrayRemove(e.target.id)
-      })
-      // añadir el nombre de selectedGroup a groups del usuario y borrarlo de requests
-      db.collection('users').doc(e.target.id).update({
-        groups: firebase.firestore.FieldValue.arrayUnion(selectedGroup.groupName),
-        requests: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName)
-      })
     }
   }
 
@@ -72,22 +80,38 @@ export default function SimpleList({people, member}) {
         { people.map(p => (
             <>
               <ListItem button > 
-                <ListItemIcon onClick={handleClick} id={p.uid} >
-                  <Icon id={p.uid} >{icon}</Icon>
+                <ListItemIcon>
+                  { selectedGroup.admin === p.uid 
+                    ? <Icon>admin_panel_settings</Icon>
+                    : <Icon onClick={handleClick} id={p.uid} >{button}</Icon>
+                  }
                 </ListItemIcon>
                 <ListItemText primary={p.name} secondary={p.email} />
+                {true && ( /* TODO: ya sorteó */
+                  <Tooltip 
+                    placement="top" 
+                    TransitionComponent={Zoom} 
+                    disableFocusListener 
+                    title="Esta persona ya sorteó" 
+                    arrow>
+                    <Icon>done</Icon>
+                  </Tooltip>
+                )}
+                {true && ( /* TODO: le regalas a esta persona */ 
+                  <Tooltip 
+                    placement="top" 
+                    TransitionComponent={Zoom} 
+                    disableFocusListener 
+                    title="¡Tú le regalas a esta persona!" 
+                    arrow>
+                    <Icon>card_giftcard</Icon>
+                  </Tooltip>
+                )}
               </ListItem>
               <Divider />
             </>
           )) 
         }
-        {/* <ListItem button>
-          <ListItemIcon>
-            <Icon>person</Icon>
-          </ListItemIcon>
-          <ListItemText primary={u.name} secondary={u.email} />
-        </ListItem>
-        <Divider /> */}
       </List>
     </div>
   );

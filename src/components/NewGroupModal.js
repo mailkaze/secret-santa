@@ -64,14 +64,17 @@ export default function NewGroupModal() {
           giversReceivers: {},
           created: Date.now()
         }
-
+        // Creamos el grupo
         groupRef.set(newGroup)
         .catch(error => {
           console.log(error)
         })
 
         //guardamos el id del grupo en el array de grupos del usuario:
-        db.collection('users').doc(user.uid).update({groups: firebase.firestore.FieldValue.arrayUnion(groupName)})
+        db.collection('users').doc(user.uid).update({
+          groups: firebase.firestore.FieldValue.arrayUnion(groupName),
+          [`wishes.${groupName}`]: '¡Cualquier cosa!'
+        })
         .then(() => {
           setGroupName('')
           handleClose()

@@ -69,7 +69,10 @@ export default function GroupCard({groupName}) {
         console.log('borrándome del grupo', groupName, 'con el usuario', user.uid)
         // TODO: aquí comprobamos si eres admin de este grupo, de ser así, pregunta de nuevo si quieres distruirlo.
         groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
-        userReference.update({groups: firebase.firestore.FieldValue.arrayRemove(groupName)})
+        userReference.update({
+          groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+          [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
+        })
         dispatch(setSearch(''))
       }
     } else {
