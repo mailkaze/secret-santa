@@ -52,10 +52,10 @@ export default function Dashboard() {
 
   function getUsers() {
     setUsers([])
-
     selectedGroup.users.forEach(userId => {
-      db.collection('users').doc(userId).onSnapshot(doc => {
-        const user = {...doc.data(), uid: userId }
+      db.collection('users').doc(userId).get()
+      .then(querySnapShot => {
+        const user = {...querySnapShot.data(), uid: userId }
         setUsers(users => [...users, user])
       })
     })
@@ -63,10 +63,10 @@ export default function Dashboard() {
   
   function getRequesters() {
     setRequesters([])
-
     selectedGroup.requests.forEach(userId => {
-      db.collection('users').doc(userId).onSnapshot(doc => {
-        const requester = {...doc.data(), uid: userId }
+      db.collection('users').doc(userId).get()
+      .then(querySnapShot => {
+        const requester = {...querySnapShot.data(), uid: userId }
         setRequesters(requesters => [...requesters, requester])
       })
     })
@@ -140,7 +140,6 @@ export default function Dashboard() {
         <TextField
           id="outlined-helperText"
           label="¿Qué quieres que te regalen?"
-          // defaultValue={"cualquier cosa"}
           value={wish}
           onChange={handleChange}
           variant="outlined"
