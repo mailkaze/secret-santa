@@ -121,6 +121,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     return () => { // al desmontar el componente:
+      dispatch(setSelectedGroup({}))
       dispatch(setShowDashboard(false))
     }
   }, [])
