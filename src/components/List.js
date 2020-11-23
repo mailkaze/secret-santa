@@ -9,7 +9,8 @@ import Tooltip from '@material-ui/core/Tooltip';
 import Zoom from '@material-ui/core/Zoom';
 import { Icon } from '@material-ui/core';
 import { db } from '../firebase'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { setSnackbar } from '../redux/actions'
 import firebase from 'firebase'
 
 const useStyles = makeStyles((theme) => ({
@@ -24,6 +25,8 @@ export default function SimpleList({people, member, isAdmin}) {
   const classes = useStyles();
   const button = checkMember()
   const selectedGroup = useSelector(state => state.selectedGroup)  
+  const snackbar = useSelector(state => state.snackbar)
+  const dispatch = useDispatch()
 
   function checkMember() {
     if (isAdmin) {
@@ -44,7 +47,6 @@ export default function SimpleList({people, member, isAdmin}) {
         // TODO: comprobar que no seas tú mismo
         if (window.confirm('¿Eliminar a esta persona del grupo?')) {
           // borrar su id de users
-          // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
           db.collection('groups').doc(groupName).update({
             users: firebase.firestore.FieldValue.arrayRemove(e.target.id),
           })
@@ -52,10 +54,10 @@ export default function SimpleList({people, member, isAdmin}) {
           db.collection('users').doc(e.target.id).update({
             groups: firebase.firestore.FieldValue.arrayRemove(groupName),
           })
+          dispatch(setSnackbar({show: true, severity: 'success', message: 'Usuario expulsado con éxito.'}))
         }
       } else {
         // añadir su id a users y quitarlo de requests
-        // ERROR: al borrar un usuario se duplica el nombre en vez de borrarse.
         db.collection('groups').doc(groupName).update({
           users: firebase.firestore.FieldValue.arrayUnion(e.target.id),
           requests: firebase.firestore.FieldValue.arrayRemove(e.target.id)
@@ -66,6 +68,7 @@ export default function SimpleList({people, member, isAdmin}) {
           requests: firebase.firestore.FieldValue.arrayRemove(groupName),
           [`wishes.${groupName}`]: '¡Cualquier cosa!'
         })
+        dispatch(setSnackbar({show: true, severity: 'success', message: 'has añadido un nuevo miembro a tu grupo.'}))
       }
     }
   }

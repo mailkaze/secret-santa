@@ -7,7 +7,10 @@ import IconButton from '@material-ui/core/IconButton';
 import { red } from '@material-ui/core/colors';
 import { Icon } from '@material-ui/core';
 import { useSelector, useDispatch } from 'react-redux'
-import { setShowDashboard, setSelectedGroup, setSearch } from '../redux/actions'
+import { setShowDashboard, 
+        setSelectedGroup, 
+        setSearch, 
+        setSnackbar } from '../redux/actions'
 import { db } from '../firebase'
 import firebase from 'firebase'
 
@@ -35,6 +38,8 @@ export default function GroupCard({groupName}) {
       dispatch(setShowDashboard(true))
       dispatch(setSearch(''))
     } else {
+      dispatch(setSnackbar({show: true, severity: 'warning', message: 'No eres miembro de este grupo.'}))
+
       console.log('acceso denegado a este grupo')
     }
   }
@@ -73,6 +78,7 @@ export default function GroupCard({groupName}) {
           groups: firebase.firestore.FieldValue.arrayRemove(groupName),
           [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
         })
+        dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
         dispatch(setSearch(''))
       }
     } else {
@@ -86,6 +92,7 @@ export default function GroupCard({groupName}) {
         console.log('Enviando solicitud al grupo', groupName, 'con el usuario', user.uid)
         groupReference.update({requests: firebase.firestore.FieldValue.arrayUnion(user.uid)})
         userReference.update({requests: firebase.firestore.FieldValue.arrayUnion(groupName)})
+        dispatch(setSnackbar({show: true, severity: 'info', message: 'Se ha enviado tu solicitud. Cuando se acepte, podrás acceder a este grupo.'}))
         dispatch(setSearch(''))
       }
     }

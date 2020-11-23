@@ -37,3 +37,31 @@ export function setSearch(search) {
     payload: search
   }
 }
+
+export function setSnackbar(snackbar) {
+  return {
+    type: 'SET_SNACKBAR',
+    payload: snackbar
+  }
+}
+
+// export function setShowSnackbar(show) {
+//   return {
+//     type: 'SET_SHOW_SNACKBAR',
+//     payload: show
+//   }
+// }
+
+// export function setSnackbarSeverity(severity) {
+//   return {
+//     type: 'SET_SNACKBAR_ SEVERITY',
+//     payload: severity
+//   }
+// }
+
+// export function setSnackbarMessage(message) {
+//   return {
+//     type: 'SET_SNACKBAR_MESSAGE',
+//     payload: message
+//   }
+// }

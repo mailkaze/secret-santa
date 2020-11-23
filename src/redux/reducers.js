@@ -12,6 +12,14 @@ export default function reducer(state, action) {
       return {...state, selectedGroup: action.payload}
     case 'SET_SEARCH':
       return {...state, search: action.payload}
+    case 'SET_SNACKBAR':
+      return {...state, snackbar: action.payload}
+    // case 'SET_SHOW_SNACKBAR':
+    //   return {...state, showSnackbar: action.payload}
+    // case 'SET_SNACKBAR_SEVERITY':
+    //   return {...state, snackbarSeverity: action.payload}
+    // case 'SET_SNACKBAR_MESSAGE':
+    //   return {...state, snackbarMessage: action.payload}
     default:
       return state
   }

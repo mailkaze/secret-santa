@@ -2,9 +2,16 @@ import React, { useState, useEffect } from 'react'
 import GroupCard from './GroupCard'
 import SearchField from './SearchField'
 import { makeStyles } from '@material-ui/core/styles';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 import NewGroupModal from './NewGroupModal';
 import { db } from '../firebase';
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { setSnackbar } from '../redux/actions'
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const useStyles = makeStyles((theme) => ({
   list: {
@@ -19,6 +26,15 @@ export default function GroupsList() {
   const [groupNames, setGroupNames] = useState([])
   const user = useSelector(state => state.user)
   const search = useSelector(state => state.search)
+  const snackbar = useSelector(state => state.snackbar)
+  const dispatch = useDispatch()
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    dispatch(setSnackbar({...snackbar, show: false}))
+  };
 
   function getGroups() {
     setGroupNames([])
@@ -58,6 +74,9 @@ export default function GroupsList() {
         <h4>Grupos:</h4>
         {groupNames.map(g => <GroupCard groupName={g} key={g}/>)}
       </div>
+      <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </div>
   )
 }

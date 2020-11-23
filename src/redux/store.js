@@ -6,6 +6,14 @@ const initialState = {
   showSignUp: false,
   showLogin: false,
   showDashboard: false,
+  snackbar: {
+    show: false,
+    severity: 'info',
+    message: 'default message'
+  },
+  // showSnackbar: false,
+  // snackbarSeverity: 'info',
+  // snackbarMessage:'',
   selectedGroup: {},
   search: '',
   

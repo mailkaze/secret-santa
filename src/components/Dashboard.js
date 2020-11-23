@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { useSelector, useDispatch } from 'react-redux'
-import { setSelectedGroup, setShowDashboard } from  '../redux/actions'
+import { setSelectedGroup, setShowDashboard, setSnackbar } from  '../redux/actions'
 import SimpleList from './List'
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Icon } from '@material-ui/core';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 import { db } from '../firebase'
 import firebase from 'firebase'
-
 
 const DashboardStyled = styled.div`
   width: 100%;
@@ -36,14 +37,26 @@ const DashboardStyled = styled.div`
   }
 `
 
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
 export default function Dashboard() {
+  const [isAdmin, setIsAdmin] = useState(false)
   const [users, setUsers] = useState([])
   const [requesters, setRequesters] = useState([])
   const [wish, setWish] = useState('¡Cualquier cosa!')
   const selectedGroup = useSelector(state => state.selectedGroup)
   const user = useSelector(state => state.user)
+  const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
-  const [isAdmin, setIsAdmin] = useState(false)
+  
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    dispatch(setSnackbar({...snackbar, show: false}))
+  };
 
   function handleClose() {
     dispatch(setSelectedGroup({}))
@@ -89,6 +102,7 @@ export default function Dashboard() {
           groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
           [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
         })
+        dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
         dispatch(setShowDashboard(false))
       }
     }
@@ -171,7 +185,9 @@ export default function Dashboard() {
       >
         { isAdmin ? 'eliminar grupo' : 'abandonar grupo'}
       </Button>
-      
+      <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </DashboardStyled>
   )
 }

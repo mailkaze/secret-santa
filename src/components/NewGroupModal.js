@@ -5,7 +5,8 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import NewGroupButton from './NewGroupButton';
 import { db } from '../firebase'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
+import { setSnackbar } from '../redux/actions'
 import firebase from 'firebase'
 
 const useStyles = makeStyles((theme) => ({
@@ -35,6 +36,8 @@ export default function NewGroupModal() {
   const [open, setOpen] = React.useState(false);
   const [groupName, setGroupName] = React.useState('')
   const user = useSelector(state => state.user)
+  const snackbar = useSelector(state => state.snackbar)
+  const dispatch = useDispatch()
 
   const handleOpen = () => {
     setOpen(true);
@@ -78,13 +81,13 @@ export default function NewGroupModal() {
         .then(() => {
           setGroupName('')
           handleClose()
-
+          dispatch(setSnackbar({show: true, severity: 'success', message: 'Nuevo grupo creado con éxito.'}))
         })
         .catch(error => {
           console.log(error)
         })
       } else {
-        alert('Ya existe un grupo con ese nombre')
+        dispatch(setSnackbar({show: true, severity: 'error', message: 'Ya existe un grupo con ese nombre.'}))
         setGroupName('')
       }
     })
