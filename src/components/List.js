@@ -25,7 +25,6 @@ export default function SimpleList({people, member, isAdmin}) {
   const classes = useStyles();
   const button = checkMember()
   const selectedGroup = useSelector(state => state.selectedGroup)  
-  const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
 
   function checkMember() {
@@ -68,7 +67,7 @@ export default function SimpleList({people, member, isAdmin}) {
           requests: firebase.firestore.FieldValue.arrayRemove(groupName),
           [`wishes.${groupName}`]: '¡Cualquier cosa!'
         })
-        dispatch(setSnackbar({show: true, severity: 'success', message: 'has añadido un nuevo miembro a tu grupo.'}))
+        dispatch(setSnackbar({show: true, severity: 'success', message: 'Has añadido un nuevo miembro a tu grupo.'}))
       }
     }
   }

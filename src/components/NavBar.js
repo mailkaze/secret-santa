@@ -36,6 +36,7 @@ export default function ButtonAppBar() {
   
   function onLogout() {
     auth.signOut()
+    
   }
 
   return (

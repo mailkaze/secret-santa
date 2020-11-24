@@ -11,9 +11,6 @@ const initialState = {
     severity: 'info',
     message: 'default message'
   },
-  // showSnackbar: false,
-  // snackbarSeverity: 'info',
-  // snackbarMessage:'',
   selectedGroup: {},
   search: '',
   

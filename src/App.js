@@ -3,7 +3,7 @@ import NavBar from './components/NavBar'
 import './App.css';
 import { auth, db } from './firebase'
 import  { useSelector, useDispatch } from 'react-redux'
-import { setUser } from './redux/actions'
+import { setUser, resetState } from './redux/actions'
 import SignUp from './components/SignUp';
 import Login from './components/Login'
 import GroupsList from './components/GroupsList';
@@ -19,18 +19,23 @@ function App() {
   function authStateListener() {
     auth.onAuthStateChanged(userData => {
       if (userData) {
+        // ESTO NO DEBERIA SER ONSNAPSHOT, CUANDO TOQUE ALGO DEL USUARIO, DEBERIA ACTUALIZAR EL STATE DE USER ALLI.???
         db.collection('users').doc(userData.uid).onSnapshot(doc => {
           dispatch(setUser({...doc.data(), uid: doc.id}))
           console.log('User:', {...doc.data(), uid: doc.id})
+          alert(`usuario cambiado a: ${doc.data().name}`)
         })
       } else {
         console.log('No hay usuario')
-        dispatch(setUser(null))
+        // dispatch(setUser(null))
+        // reseteamos todo el state incluido el user a null:
+        dispatch(resetState())
       }
     })
   }
 
   useEffect(() => {
+    console.log('se recarga app.js')
     authStateListener()
   }, [])
 

@@ -68,6 +68,7 @@ export default function Dashboard() {
     selectedGroup.users.forEach(userId => {
       db.collection('users').doc(userId).get()
       .then(querySnapShot => {
+        // SERÁ UN PROBLEMA QUE ESTE USER SE LLAMA IGUAL QUE EL USER DE USUARIO ACTUAL?????
         const user = {...querySnapShot.data(), uid: userId }
         setUsers(users => [...users, user])
       })
@@ -89,8 +90,27 @@ export default function Dashboard() {
     const groupReference = db.collection('groups').doc(selectedGroup.groupName)
     const userReference = db.collection('users').doc(user.uid)
     if (isAdmin) {
-      if (window.confirm('Si eliminas el grupo nadie podra acceder a él y borra todos los datos de regalos y sorteos, ¿Deseas eliminar este grupo?')) {
-        // TODO: eliminar grupo
+      if (window.confirm('Si eliminas el grupo nadie podra acceder a él y se borrarán todos los datos de regalos y sorteos, ¿Deseas eliminar este grupo?')) {
+        // eliminar grupo
+        // recoger la lista de usuarios y eliminar el grupo de todas las listas de cada usuario:
+        const members = selectedGroup.users
+        const requesters = selectedGroup.requests
+        members.forEach(async m => {
+          await db.collection('users').doc(m).update({
+            groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
+            [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+          })
+        })
+        requesters.forEach(async r => {
+          await db.collection('users').doc(r).update({
+            requests: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName)
+          })
+        })
+        // destruir el grupo
+        groupReference.delete()
+        .then(() => {
+          dispatch(setSnackbar({show: true, severity: 'success', message: 'El grupo se ha eliminado con éxito.'}))
+        })
         dispatch(setShowDashboard(false))
       }
     } else {
@@ -115,6 +135,9 @@ export default function Dashboard() {
       // firebase exije que lo escribas "dato.key: cambio" o si no borra las demás keys.
       // como la key no la se porque es dinámica tuve que hacer esta rareza para que funcione:
       [`wishes.${selectedGroup.groupName}`]: wish
+    })
+    .then(() => {
+      dispatch(setSnackbar({show: true, severity: 'success', message: 'Tu nuevo regalo ideal se guardado correctamente.'}))
     })
   }
 

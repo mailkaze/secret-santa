@@ -69,13 +69,12 @@ export default function SignUp() {
         if (password1.length >= 8) {
           console.log('TODO CORRECTO')
           auth.createUserWithEmailAndPassword(email, password1)
-          .then( async userCredential => {
+          .then( userCredential => {
             setError(false) 
             setName('')
             setEmail('')
             setPassword1('')
             setPassword2('')
-            dispatch(toggleShowSignUp())
             
             const newUser = {
               name: name,
@@ -85,7 +84,8 @@ export default function SignUp() {
               ratigns: {},
               requests: []
             }
-            await db.collection('users').doc(userCredential.user.uid).set(newUser)
+            db.collection('users').doc(userCredential.user.uid).set(newUser)
+            .then(() => dispatch(toggleShowSignUp()))
           })
           .catch(error => {
             // TODO: errores del lado del servidor

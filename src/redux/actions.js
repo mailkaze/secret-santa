@@ -45,23 +45,23 @@ export function setSnackbar(snackbar) {
   }
 }
 
-// export function setShowSnackbar(show) {
-//   return {
-//     type: 'SET_SHOW_SNACKBAR',
-//     payload: show
-//   }
-// }
-
-// export function setSnackbarSeverity(severity) {
-//   return {
-//     type: 'SET_SNACKBAR_ SEVERITY',
-//     payload: severity
-//   }
-// }
-
-// export function setSnackbarMessage(message) {
-//   return {
-//     type: 'SET_SNACKBAR_MESSAGE',
-//     payload: message
-//   }
-// }
+export function resetState() {
+  const initialState = {
+    user: null,
+    showSignUp: false,
+    showLogin: false,
+    showDashboard: false,
+    snackbar: {
+      show: false,
+      severity: 'info',
+      message: 'default message'
+    },
+    selectedGroup: {},
+    search: '',
+    
+  }
+  return {
+    type: 'RESET_STATE',
+    payload: initialState
+  }
+}

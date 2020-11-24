@@ -39,8 +39,6 @@ export default function GroupCard({groupName}) {
       dispatch(setSearch(''))
     } else {
       dispatch(setSnackbar({show: true, severity: 'warning', message: 'No eres miembro de este grupo.'}))
-
-      console.log('acceso denegado a este grupo')
     }
   }
 
@@ -69,22 +67,51 @@ export default function GroupCard({groupName}) {
     const userReference = db.collection('users').doc(user.uid)
 
     if (member) {
-      // salir del grupo
-      if (window.confirm('¿Abandonar de este grupo?')) {
-        console.log('borrándome del grupo', groupName, 'con el usuario', user.uid)
-        // TODO: aquí comprobamos si eres admin de este grupo, de ser así, pregunta de nuevo si quieres distruirlo.
-        groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
-        userReference.update({
-          groups: firebase.firestore.FieldValue.arrayRemove(groupName),
-          [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
-        })
-        dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
-        dispatch(setSearch(''))
-      }
+      // salir del grupo, si eres admin lo destruye:
+      groupReference.get()
+      .then(doc => {
+        if (doc.data().admin === user.uid) { // eres el administrador, destruir grupo:
+          if(window.confirm('Si eliminas el grupo nadie podra acceder a él y se borrarán todos los datos de regalos y sorteos, ¿Deseas eliminar este grupo?')) {
+            // recoger la lista de usuarios y eliminar el grupo de todas las listas de cada usuario:
+            const members = doc.data().users
+            const requesters = doc.data().requests
+            members.forEach(async m => {
+              await db.collection('users').doc(m).update({
+                groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+                [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
+              })
+            })
+            requesters.forEach(async r => {
+              await db.collection('users').doc(r).update({
+                requests: firebase.firestore.FieldValue.arrayRemove(groupName)
+              })
+            })
+            // destruir el grupo
+            groupReference.delete()
+            .then(() => {
+              dispatch(setSnackbar({show: true, severity: 'success', message: 'El grupo se ha eliminado con éxito.'}))
+            })            
+          }
+        } else { // no eres administrador y solo sales del grupo:
+          if (window.confirm('¿Abandonar este grupo?')) {            
+            groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
+            userReference.update({
+              groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+              [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
+            })
+            dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
+            dispatch(setSearch(''))
+          }
+        }
+      })
+      
     } else {
       if (user.requests.includes(groupName)) {
         if (window.confirm('¿Cancelar solicitud?')) {
-          // TODO: cancelar solicitud
+          // cancelar solicitud
+          groupReference.update({requests: firebase.firestore.FieldValue.arrayRemove(user.uid)})
+          userReference.update({requests: firebase.firestore.FieldValue.arrayRemove(groupName)})
+          dispatch(setSnackbar({show: true, severity: 'info', message: 'Has cancelado tu solicitud de ingreso a este grupo.'}))
           dispatch(setSearch(''))
         }
       } else {
