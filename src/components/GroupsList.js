@@ -7,7 +7,7 @@ import MuiAlert from '@material-ui/lab/Alert';
 import NewGroupModal from './NewGroupModal';
 import { db } from '../firebase';
 import { useSelector, useDispatch } from 'react-redux'
-import { setSnackbar } from '../redux/actions'
+import { setUser, setSnackbar } from '../redux/actions'
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -36,16 +36,18 @@ export default function GroupsList() {
     dispatch(setSnackbar({...snackbar, show: false}))
   };
 
+  function getUserData() {
+    // hacemos una escucha a la db para que se actualice la lista al realizar cambios:
+    db.collection('users').doc(user.uid).onSnapshot(doc => {
+      dispatch(setUser({...doc.data(), uid: doc.id}))
+    })
+  }
+
   function getGroups() {
     setGroupNames([])
-
+    getUserData() 
     if (search === '') { // No se está buscando nada, traemos la lista de nombres de grupos de los datos de usuario
-      // hacemos una escucha a la db en lugar de traer los datos sin más, para que se actualice la lista al realizar cambios
-      
-      db.collection('users').doc(user.uid).onSnapshot(doc => {
-        const groupIds = doc.data().groups
-        setGroupNames(groupIds)
-      })
+      setGroupNames(user.groups)
     } else { // hay búsqueda, traemos las coincidencias
       db.collection('groups').get()
       .then(querySnapShot => {

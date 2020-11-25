@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import NavBar from './components/NavBar'
 import './App.css';
 import { auth, db } from './firebase'
-import  { useSelector, useDispatch } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { setUser, resetState } from './redux/actions'
 import SignUp from './components/SignUp';
 import Login from './components/Login'
@@ -17,17 +17,15 @@ function App() {
   const dispatch = useDispatch()
 
   function authStateListener() {
-    auth.onAuthStateChanged(userData => {
-      if (userData) {
-        // ESTO NO DEBERIA SER ONSNAPSHOT, CUANDO TOQUE ALGO DEL USUARIO, DEBERIA ACTUALIZAR EL STATE DE USER ALLI.???
-        db.collection('users').doc(userData.uid).onSnapshot(doc => {
+    auth.onAuthStateChanged(userCredential => {
+      if (userCredential) {
+        db.collection('users').doc(userCredential.uid).get()
+        .then(doc => {
           dispatch(setUser({...doc.data(), uid: doc.id}))
-          console.log('User:', {...doc.data(), uid: doc.id})
-          alert(`usuario cambiado a: ${doc.data().name}`)
+          console.log('USER:', doc.data().name)
         })
       } else {
         console.log('No hay usuario')
-        // dispatch(setUser(null))
         // reseteamos todo el state incluido el user a null:
         dispatch(resetState())
       }
@@ -35,7 +33,6 @@ function App() {
   }
 
   useEffect(() => {
-    console.log('se recarga app.js')
     authStateListener()
   }, [])
 

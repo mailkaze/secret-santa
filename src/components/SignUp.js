@@ -67,7 +67,6 @@ export default function SignUp() {
     if (name && email && password1 && password2) {
       if (password1 === password2) {
         if (password1.length >= 8) {
-          console.log('TODO CORRECTO')
           auth.createUserWithEmailAndPassword(email, password1)
           .then( userCredential => {
             setError(false) 

@@ -33,7 +33,6 @@ export default function GroupCard({groupName}) {
 
   function handleClick() {
     if (member) {
-      console.log(user)
       getGroupData()
       dispatch(setShowDashboard(true))
       dispatch(setSearch(''))
@@ -43,6 +42,7 @@ export default function GroupCard({groupName}) {
   }
 
   function getGroupData() {
+    // Escuchador de cambios del grupo seleccionado, así en el dashboard se actualizan los cambios en tiempo real:
     db.collection('groups').doc(groupName).onSnapshot(doc => {
       dispatch(setSelectedGroup({...doc.data(), groupName: groupName}))
     })
@@ -116,7 +116,6 @@ export default function GroupCard({groupName}) {
         }
       } else {
         // enviar solicitud
-        console.log('Enviando solicitud al grupo', groupName, 'con el usuario', user.uid)
         groupReference.update({requests: firebase.firestore.FieldValue.arrayUnion(user.uid)})
         userReference.update({requests: firebase.firestore.FieldValue.arrayUnion(groupName)})
         dispatch(setSnackbar({show: true, severity: 'info', message: 'Se ha enviado tu solicitud. Cuando se acepte, podrás acceder a este grupo.'}))

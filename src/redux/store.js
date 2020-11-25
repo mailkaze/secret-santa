@@ -3,6 +3,8 @@ import reducer from './reducers'
 
 const initialState = {
   user: null,
+  selectedGroup: {},
+  search: '',
   showSignUp: false,
   showLogin: false,
   showDashboard: false,
@@ -11,8 +13,6 @@ const initialState = {
     severity: 'info',
     message: 'default message'
   },
-  selectedGroup: {},
-  search: '',
   
 }
 

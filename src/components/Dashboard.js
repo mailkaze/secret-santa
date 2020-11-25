@@ -43,7 +43,7 @@ function Alert(props) {
 
 export default function Dashboard() {
   const [isAdmin, setIsAdmin] = useState(false)
-  const [users, setUsers] = useState([])
+  const [members, setMembers] = useState([])
   const [requesters, setRequesters] = useState([])
   const [wish, setWish] = useState('¡Cualquier cosa!')
   const selectedGroup = useSelector(state => state.selectedGroup)
@@ -63,14 +63,13 @@ export default function Dashboard() {
     dispatch(setShowDashboard(false))
   }
 
-  function getUsers() {
-    setUsers([])
+  function getMembers() {
+    setMembers([])
     selectedGroup.users.forEach(userId => {
       db.collection('users').doc(userId).get()
-      .then(querySnapShot => {
-        // SERÁ UN PROBLEMA QUE ESTE USER SE LLAMA IGUAL QUE EL USER DE USUARIO ACTUAL?????
-        const user = {...querySnapShot.data(), uid: userId }
-        setUsers(users => [...users, user])
+      .then(doc => {
+        const member = {...doc.data(), uid: userId }
+        setMembers(members => [...members, member])
       })
     })
   }
@@ -116,7 +115,6 @@ export default function Dashboard() {
     } else {
       // salir del grupo
       if (window.confirm('¿Abandonar de este grupo?')) {
-        console.log('borrándome del grupo', selectedGroup.groupName, 'con el usuario', user.uid)
         groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
         userReference.update({
           groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
@@ -131,9 +129,8 @@ export default function Dashboard() {
   function updateWish(e) {
     e.preventDefault()
     db.collection('users').doc(user.uid).update({
-      // esta línea de abajo es rara pero para actualizar un dato de tipo objeto
-      // firebase exije que lo escribas "dato.key: cambio" o si no borra las demás keys.
-      // como la key no la se porque es dinámica tuve que hacer esta rareza para que funcione:
+      // Para actualizar un dato de tipo objeto Firebase exije que lo escribas "dato.key: cambio" 
+      // o si no borra las demás keys. Como la key aquí es dinámica tuve que hacer esta rareza para que funcione:
       [`wishes.${selectedGroup.groupName}`]: wish
     })
     .then(() => {
@@ -147,12 +144,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     // si ya tenemos los datos del grupo, podemos traer los de sus personas:
-    console.log(selectedGroup)
+    console.log('SELECTED-GROUP:', selectedGroup.groupName)
     if (Object.keys(selectedGroup).length > 0) {
       setWish(user.wishes[selectedGroup.groupName])
       setIsAdmin(selectedGroup.admin === user.uid)
+      getMembers()
       getRequesters()
-      getUsers()
     } 
   }, [selectedGroup])
 
@@ -190,7 +187,7 @@ export default function Dashboard() {
       
       <div className="members">
         <h4>Miembros de este grupo:</h4>
-        { users.length > 0 && <SimpleList people={users} member={true} isAdmin={isAdmin} />}
+        { members.length > 0 && <SimpleList people={members} member={true} isAdmin={isAdmin} />}
       </div>
 
       { requesters.length > 0 && isAdmin &&

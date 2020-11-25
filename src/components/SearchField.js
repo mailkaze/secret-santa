@@ -24,7 +24,6 @@ export default function SearchField() {
 
   function handleSearch(e) {
     e.preventDefault()
-    console.log('Buscar:', searchTerm.toLowerCase())
     dispatch(setSearch(searchTerm.toLowerCase()))
   }
 

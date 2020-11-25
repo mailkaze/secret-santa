@@ -72,16 +72,12 @@ export default function SimpleList({people, member, isAdmin}) {
     }
   }
 
-  useEffect(() => {
-    console.log(people)
-  }, [])
-
   return (
-    <div className={classes.root}>
+    <div className={classes.root} key={member ? 'members' : 'requesters'}>
       <List component="nav" aria-label="main mailbox folders">
         { people.map(p => (
             <>
-              <ListItem button > 
+              <ListItem key={p.uid} > 
                 <ListItemIcon>
                   { selectedGroup.admin === p.uid 
                     ? <Icon>admin_panel_settings</Icon>
