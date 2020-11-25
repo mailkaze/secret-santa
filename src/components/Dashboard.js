@@ -134,12 +134,23 @@ export default function Dashboard() {
       [`wishes.${selectedGroup.groupName}`]: wish
     })
     .then(() => {
-      dispatch(setSnackbar({show: true, severity: 'success', message: 'Tu nuevo regalo ideal se guardado correctamente.'}))
+      dispatch(setSnackbar({show: true, severity: 'success', message: 'Tu nuevo regalo ideal se ha guardado correctamente.'}))
     })
   }
 
   function handleChange(e) {
     setWish(e.target.value)
+  }
+
+  function onReady() {
+    if (window.confirm('Al entrar en la etapa de sorteo los miembros verán por turnos el botón SORTEO y ya no se podrán añadir o borrar miembros. ¿Iniciar etapa de sorteo?')) {
+      db.collection('groups').doc(selectedGroup.groupName).update({
+        drawStage: true
+      })
+      .then(() => {
+        dispatch(setSnackbar({show: true, severity: 'success', message: 'El grupo ha entrado en etapa de sorteo. Sólo un miebro a la vez podrá sortear y será en el orden en que fueron añadidos.'}))
+      })
+    }
   }
 
   useEffect(() => {
@@ -166,7 +177,7 @@ export default function Dashboard() {
       <h2>Grupo {selectedGroup.groupName}</h2>
       {isAdmin && <p>Eres el administrador de este grupo.</p>}
       { isAdmin 
-        ? (<Button variant="contained" color="primary" id="readyButton">
+        ? (!selectedGroup.drawStage && <Button variant="contained" color="primary" id="readyButton" onClick={onReady} >
             Listo para sorteo
           </Button>)
         : <p>Esperando a que se complete el grupo...</p>
@@ -181,9 +192,9 @@ export default function Dashboard() {
         />
         <Button variant="contained" color="primary" id="readyButton" type="submit">Guardar</Button>
       </form>
-      <Button variant="contained" color="secondary" id="readyButton" size="large">
+      {selectedGroup.drawStage && <Button variant="contained" color="secondary" id="readyButton" size="large">
         🎁 SORTEAR
-      </Button>
+      </Button>}
       
       <div className="members">
         <h4>Miembros de este grupo:</h4>
