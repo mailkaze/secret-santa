@@ -144,6 +144,9 @@ export default function Dashboard() {
 
   function onReady() {
     if (window.confirm('Al entrar en la etapa de sorteo los miembros verán por turnos el botón SORTEO y ya no se podrán añadir o borrar miembros. ¿Iniciar etapa de sorteo?')) {
+      
+      draw() // el sorteo es justo y aleatorio pero debe hacerse en esta etapa para evitar errores
+
       db.collection('groups').doc(selectedGroup.groupName).update({
         drawStage: true
       })
@@ -151,6 +154,57 @@ export default function Dashboard() {
         dispatch(setSnackbar({show: true, severity: 'success', message: 'El grupo ha entrado en etapa de sorteo. Sólo un miebro a la vez podrá sortear y será en el orden en que fueron añadidos.'}))
       })
     }
+  }
+
+  function showDrawButton() {
+    if (selectedGroup.drawStage) {
+      if (!Object.keys(selectedGroup.giversReceivers).find(giver => giver === user.uid)) {
+        console.log('aun no regalas a nadie')
+        return true
+      }
+      console.log('ya sorteaste')
+    }
+    return false
+  }
+
+  function draw() {
+    // const receivers = Object.values(selectedGroup.giversReceivers)
+    // console.log(receivers)
+    // const candidates = selectedGroup.users.filter(u => u !== user.uid && !receivers.includes(u))
+    // // miembros que no sea yo ni estén como valores en giversreceivers
+    // const randomSize = candidates.length
+    // const result = Math.floor(Math.random() * randomSize)
+    // console.log('Le regalas a la posición:', result, 'con UID:', candidates[result])
+    // db.collection('groups').doc(selectedGroup.groupName).update({
+    //   [`giversReceivers.${user.uid}`]: candidates[result]
+    // })
+    const givers = selectedGroup.users
+    let receivers = [...givers]
+    receivers.sort(() => Math.random() - 0.5)
+    const giversReceivers = {}
+    givers.forEach((key, i) => giversReceivers[key] = receivers[i])
+    console.log('Objeto giversReceivers sorteado:',giversReceivers)
+    let perfectShuffle = true
+    for (const key in giversReceivers) {
+      if (key === giversReceivers[key]) {
+        perfectShuffle = false
+      }
+    }
+    if (perfectShuffle) {
+      console.log('todo salió perfecto, lo escribimos en la DB')
+      db.collection('groups').doc(selectedGroup.groupName).update({ giversReceivers: giversReceivers})
+    } else {
+      console.log('No se sorteó bien, repetimos')
+      draw()
+    }
+  }
+
+  function illusion() {
+    console.log('le regalas a...')
+  }
+
+  function resetDraw() {
+    db.collection('groups').doc(selectedGroup.groupName).update({ drawStage: false, giversReceivers: {} })
   }
 
   useEffect(() => {
@@ -192,9 +246,12 @@ export default function Dashboard() {
         />
         <Button variant="contained" color="primary" id="readyButton" type="submit">Guardar</Button>
       </form>
-      {selectedGroup.drawStage && <Button variant="contained" color="secondary" id="readyButton" size="large">
-        🎁 SORTEAR
-      </Button>}
+      {showDrawButton() && 
+        <Button variant="contained" color="secondary" id="readyButton" size="large" onClick={illusion} >
+          🎁 SORTEAR
+        </Button>
+      }
+      <button onClick={resetDraw}>RESET</button>
       
       <div className="members">
         <h4>Miembros de este grupo:</h4>
