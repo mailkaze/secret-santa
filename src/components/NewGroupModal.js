@@ -65,7 +65,9 @@ export default function NewGroupModal() {
           users: [user.uid],
           requests: [],
           giversReceivers: {},
-          created: Date.now()
+          created: Date.now(),
+          shuffleStage: false,
+          shufflers: []
         }
         // Creamos el grupo
         groupRef.set(newGroup)

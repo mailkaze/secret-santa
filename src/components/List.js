@@ -25,6 +25,7 @@ export default function SimpleList({people, member, isAdmin}) {
   const classes = useStyles();
   const button = checkMember()
   const selectedGroup = useSelector(state => state.selectedGroup)  
+  const user = useSelector(state => state.user)
   const dispatch = useDispatch()
 
   function checkMember() {
@@ -36,6 +37,20 @@ export default function SimpleList({people, member, isAdmin}) {
       }
     }
     return 'person'
+  }
+
+  function checkShuffler(person) {
+    if (selectedGroup.shuffleStage) {
+      if (selectedGroup.shufflers.includes(person.uid)){
+        return 'done'
+      }
+    }
+  }
+
+  function checkReceiver(person) {
+    if (selectedGroup.giversReceivers[user.uid] === person.uid) {
+      return 'card_giftcard'
+    }
   }
 
   function handleClick(e) {
@@ -85,24 +100,24 @@ export default function SimpleList({people, member, isAdmin}) {
                   }
                 </ListItemIcon>
                 <ListItemText primary={p.name} secondary={p.email} />
-                {true && ( /* TODO: ya sorteó */
+                {true && (
                   <Tooltip 
                     placement="top" 
                     TransitionComponent={Zoom} 
                     disableFocusListener 
                     title="Esta persona ya sorteó" 
                     arrow>
-                    <Icon>done</Icon>
+                    <Icon>{checkShuffler(p)}</Icon>
                   </Tooltip>
                 )}
-                {true && ( /* TODO: le regalas a esta persona */ 
+                {true && (
                   <Tooltip 
                     placement="top" 
                     TransitionComponent={Zoom} 
                     disableFocusListener 
                     title="¡Tú le regalas a esta persona!" 
                     arrow>
-                    <Icon>card_giftcard</Icon>
+                    <Icon>{checkReceiver(p)}</Icon>
                   </Tooltip>
                 )}
               </ListItem>
