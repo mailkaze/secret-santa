@@ -11,6 +11,8 @@ import MuiAlert from '@material-ui/lab/Alert';
 import { db } from '../firebase'
 import firebase from 'firebase'
 import PresentCard from './presentCard'
+import ShuffleModal from './shuffleModal'
+import RateCard from './RateCard'
 
 const DashboardStyled = styled.div`
   width: 100%;
@@ -47,6 +49,8 @@ export default function Dashboard() {
   const [members, setMembers] = useState([])
   const [requesters, setRequesters] = useState([])
   const [wish, setWish] = useState('¡Cualquier cosa!')
+  const [showShuffleModal, setShowShuffleModal] = useState(false)
+  const [shuffleNames, setShuffleNames] = useState([])
   const [receiverName, setReceiverName] = useState('')
   const [receiverWish, setReceiverWish] = useState('')
   const selectedGroup = useSelector(state => state.selectedGroup)
@@ -147,7 +151,7 @@ export default function Dashboard() {
 
   function onReady() {
     if (selectedGroup.users.length > 1) {
-      if (window.confirm('Al entrar en la etapa de sorteo los miembros verán por turnos el botón SORTEO y ya no se podrán añadir o borrar miembros. ¿Iniciar etapa de sorteo?')) {
+      if (window.confirm('Al entrar en la etapa de sorteo los miembros verán el botón SORTEAR y ya no se podrán añadir o borrar miembros. ¿Iniciar etapa de sorteo?')) {
         
         shuffle() // el sorteo es justo y aleatorio pero debe hacerse en esta etapa para evitar errores
         
@@ -155,7 +159,7 @@ export default function Dashboard() {
           shuffleStage: true
         })
         .then(() => {
-          dispatch(setSnackbar({show: true, severity: 'success', message: 'El grupo ha entrado en etapa de sorteo. Sólo un miebro a la vez podrá sortear y será en el orden en que fueron añadidos.'}))
+          dispatch(setSnackbar({show: true, severity: 'success', message: 'Etapa de sorteo, ¡ahora los miembros de este grupo pueden pulsar el botón sortear para ver a quién les toca regalar!'}))
         })
       }
     } else {
@@ -191,8 +195,14 @@ export default function Dashboard() {
       shufflers: firebase.firestore.FieldValue.arrayUnion(user.uid)
     })
     // animacion
-    // mostrar estrellas
-    console.log('le regalas a...')
+    setShuffleNames([])
+    selectedGroup.users.forEach(m => {
+      db.collection('users').doc(m).get()
+      .then(doc => {
+        setShuffleNames(shuffleNames => [...shuffleNames, doc.data().name])
+      })
+    })
+    //TODO: mostrar estrellas
   }
 
   function resetShuffle() {
@@ -232,6 +242,12 @@ export default function Dashboard() {
     }
   }, [])
 
+  useEffect(() => {
+    if (shuffleNames.length > 0) {
+      setShowShuffleModal(true)
+    }
+  },[shuffleNames])
+
   return (
     <DashboardStyled>
       <Icon onClick={handleClose} >close</Icon>
@@ -253,19 +269,24 @@ export default function Dashboard() {
         />
         <Button variant="contained" color="primary" id="readyButton" type="submit">Guardar</Button>
       </form>
-      {selectedGroup.shuffleStage && !selectedGroup.shufflers.includes(user.uid)
-        ? (<Button variant="contained" color="secondary" id="readyButton" size="large" onClick={illusion} >
-            🎁 SORTEAR
-          </Button>)
-        : <PresentCard name={receiverName} wish={receiverWish} />
+      {
+        selectedGroup.shuffleStage &&
+          (!selectedGroup.shufflers.includes(user.uid)
+          ? (<Button variant="contained" color="secondary" id="readyButton" size="large" onClick={illusion} >
+              🎁 SORTEAR
+            </Button>)
+          : (<div>
+              <PresentCard name={receiverName} wish={receiverWish} />
+              <RateCard />
+            </div>))
       }
-      
+      {showShuffleModal && <ShuffleModal show={showShuffleModal} setShow={setShowShuffleModal} names={shuffleNames} receiver={receiverName} />}
       <div className="members">
         <h4>Miembros de este grupo:</h4>
         { members.length > 0 && <SimpleList people={members} member={true} isAdmin={isAdmin} />}
       </div>
 
-      { requesters.length > 0 && isAdmin &&
+      { requesters.length > 0 && isAdmin && !selectedGroup.shuffleStage &&
         <div className="requests">
           <h4>Solicitudes para unirse:</h4>
           { <SimpleList people={requesters} member={false} isAdmin={isAdmin} />}

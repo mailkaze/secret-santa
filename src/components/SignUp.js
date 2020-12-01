@@ -10,7 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { auth, db } from '../firebase'
-import { toggleShowSignUp } from '../redux/actions'
+import { setShowSignUp } from '../redux/actions'
 import { useDispatch } from 'react-redux'
 
 const useStyles = makeStyles((theme) => ({
@@ -84,7 +84,7 @@ export default function SignUp() {
               requests: []
             }
             db.collection('users').doc(userCredential.user.uid).set(newUser)
-            .then(() => dispatch(toggleShowSignUp()))
+            .then(() => dispatch(setShowSignUp(false)))
           })
           .catch(error => {
             // TODO: errores del lado del servidor

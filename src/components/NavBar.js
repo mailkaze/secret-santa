@@ -6,7 +6,7 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import { useSelector, useDispatch } from 'react-redux'
-import { toggleShowSignUp, toggleShowLogin } from '../redux/actions';
+import { setShowSignUp, setShowLogin } from '../redux/actions';
 import { auth } from '../firebase'
 
 const useStyles = makeStyles((theme) => ({
@@ -27,11 +27,13 @@ export default function ButtonAppBar() {
   const user = useSelector(state => state.user)
 
   function onSignUp() {
-    dispatch(toggleShowSignUp())
+    dispatch(setShowSignUp(true))
+    dispatch(setShowLogin(false))
   }
 
   function onLogin() {
-    dispatch(toggleShowLogin())
+    dispatch(setShowLogin(true))
+    dispatch(setShowSignUp(false))
   }
   
   function onLogout() {

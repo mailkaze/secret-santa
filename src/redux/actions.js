@@ -5,15 +5,17 @@ export function setUser(userData) {
   }
 }
 
-export function toggleShowSignUp() {
+export function setShowSignUp(showSignUp) {
   return {
-    type: 'TOGGLE_SHOW_SIGNUP',
+    type: 'SET_SHOW_SIGNUP',
+    payload: showSignUp
   }
 }
 
-export function toggleShowLogin() {
+export function setShowLogin(showLogin) {
   return {
-    type: 'TOGGLE_SHOW_LOGIN',
+    type: 'SET_SHOW_LOGIN',
+    payload: showLogin
   }
 }
 

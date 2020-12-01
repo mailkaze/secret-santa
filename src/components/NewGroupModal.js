@@ -36,7 +36,6 @@ export default function NewGroupModal() {
   const [open, setOpen] = React.useState(false);
   const [groupName, setGroupName] = React.useState('')
   const user = useSelector(state => state.user)
-  const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
 
   const handleOpen = () => {
@@ -81,9 +80,9 @@ export default function NewGroupModal() {
           [`wishes.${groupName}`]: '¡Cualquier cosa!'
         })
         .then(() => {
+          dispatch(setSnackbar({show: true, severity: 'success', message: 'Nuevo grupo creado con éxito.'}))
           setGroupName('')
           handleClose()
-          dispatch(setSnackbar({show: true, severity: 'success', message: 'Nuevo grupo creado con éxito.'}))
         })
         .catch(error => {
           console.log(error)

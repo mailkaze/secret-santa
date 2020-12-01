@@ -6,6 +6,8 @@ import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
 import { red } from '@material-ui/core/colors';
 import { Icon } from '@material-ui/core';
+import Tooltip from '@material-ui/core/Tooltip';
+import Zoom from '@material-ui/core/Zoom';
 import { useSelector, useDispatch } from 'react-redux'
 import { setShowDashboard, 
         setSelectedGroup, 
@@ -28,7 +30,8 @@ export default function GroupCard({groupName}) {
   const classes = useStyles();
   const user = useSelector(state => state.user)
   const member = user.groups.includes(groupName)
-  const icon = checkMember()
+  const icon = checkMember('icon')
+  const tip = checkMember('tip')
   const dispatch = useDispatch()
 
   function handleClick() {
@@ -48,16 +51,29 @@ export default function GroupCard({groupName}) {
     })
   }
 
-  function checkMember() {
-    if (user.groups.includes(groupName)) {
-      return 'clear' // eres miembro
-    } else {
-      if (user.requests.includes(groupName)) {
-        return 'how_to_reg' // solicitud enviada
+  function checkMember(origin) {
+    if (origin === 'icon') {
+      if (user.groups.includes(groupName)) {
+        return 'clear' // eres miembro
       } else {
-        return 'person_add' // no eres miembro
+        if (user.requests.includes(groupName)) {
+          return 'how_to_reg' // solicitud enviada
+        } else {
+          return 'person_add' // no eres miembro
+        }
+      }
+    } else if (origin === 'tip') {
+      if (user.groups.includes(groupName)) {
+        return 'Salir del grupo' // eres miembro
+      } else {
+        if (user.requests.includes(groupName)) {
+          return 'Solicitud enviada' // solicitud enviada
+        } else {
+          return 'Enviar solicitud de miembro' // no eres miembro
+        }
       }
     }
+    
   }
 
   function handleMembership(e) {
@@ -104,7 +120,6 @@ export default function GroupCard({groupName}) {
           }
         }
       })
-      
     } else {
       if (user.requests.includes(groupName)) {
         if (window.confirm('¿Cancelar solicitud?')) {
@@ -135,7 +150,15 @@ export default function GroupCard({groupName}) {
         }
         action={
           <IconButton aria-label="settings"  onClick={handleMembership} >
-            <Icon>{icon}</Icon>
+            <Tooltip 
+              placement="top" 
+              TransitionComponent={Zoom} 
+              disableFocusListener 
+              title={tip}
+              arrow>
+              <Icon>{icon}</Icon>
+            </Tooltip>
+            
           </IconButton>
         }
         title={groupName}

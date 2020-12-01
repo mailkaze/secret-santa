@@ -11,7 +11,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { auth } from '../firebase'
 import { useDispatch } from 'react-redux'
-import { toggleShowLogin } from '../redux/actions';
+import { setShowLogin } from '../redux/actions';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -62,7 +62,7 @@ export default function SignIn() {
       setError(false) 
       setEmail('')
       setPassword('')
-      dispatch(toggleShowLogin())
+      dispatch(setShowLogin(false))
     })
     .catch(error => {
       console.log(error.code, error.message)

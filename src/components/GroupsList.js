@@ -46,9 +46,7 @@ export default function GroupsList() {
   function getGroups() {
     setGroupNames([])
     getUserData() 
-    if (search === '') { // No se está buscando nada, traemos la lista de nombres de grupos de los datos de usuario
-      setGroupNames(user.groups)
-    } else { // hay búsqueda, traemos las coincidencias
+    if (search !== '') {
       db.collection('groups').get()
       .then(querySnapShot => {
         querySnapShot.forEach(doc => {
@@ -59,14 +57,14 @@ export default function GroupsList() {
       })
     }
   }  
-  
-  useEffect(() => {
-    getGroups()
-  }, [])
 
   useEffect(() => {
     getGroups()
   }, [search])
+  
+  useEffect(() => {
+    getGroups()
+  }, [])
 
   return (
     <div>
@@ -74,7 +72,10 @@ export default function GroupsList() {
       <NewGroupModal />
       <div className={classes.list}>
         <h4>Grupos:</h4>
-        {groupNames.map(g => <GroupCard groupName={g} key={g}/>)}
+        {search === '' 
+          ? user.groups.map(g => <GroupCard groupName={g} key={g} />)
+          : groupNames.map(g => <GroupCard groupName={g} key={g} />)
+        }
       </div>
       <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>

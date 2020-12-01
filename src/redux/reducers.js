@@ -2,10 +2,10 @@ export default function reducer(state, action) {
   switch(action.type) {
     case 'SET_USER':
       return {...state, user: action.payload}
-    case 'TOGGLE_SHOW_SIGNUP':
-      return {...state, showSignUp: !state.showSignUp}
-    case 'TOGGLE_SHOW_LOGIN':
-      return {...state, showLogin: !state.showLogin}
+    case 'SET_SHOW_SIGNUP':
+      return {...state, showSignUp: action.payload}
+    case 'SET_SHOW_LOGIN':
+      return {...state, showLogin: action.payload}
     case 'SET_SHOW_DASHBOARD':
       return {...state, showDashboard: action.payload}
     case 'SET_SELECTED_GROUP':
