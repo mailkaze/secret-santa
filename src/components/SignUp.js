@@ -10,7 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { auth, db } from '../firebase'
-import { setShowSignUp } from '../redux/actions'
+import { setShowSignUp, setShowLogin } from '../redux/actions'
 import { useDispatch } from 'react-redux'
 
 const useStyles = makeStyles((theme) => ({
@@ -80,7 +80,7 @@ export default function SignUp() {
               email: userCredential.user.email,
               groups: [],
               wishes: {},
-              ratigns: {},
+              ratings: {},
               requests: []
             }
             db.collection('users').doc(userCredential.user.uid).set(newUser)
@@ -102,6 +102,11 @@ export default function SignUp() {
       console.log('algunos campos están vacíos')
       setError(true)
     }
+  }
+
+  function handleLinkClick() {
+    dispatch(setShowSignUp(false))
+    dispatch(setShowLogin(true))
   }
 
   return (
@@ -179,7 +184,7 @@ export default function SignUp() {
           </Button>
           <Grid container justify="flex-end">
             <Grid item>
-              <Link href="#" variant="body2">
+              <Link href="#" variant="body2" onClick={handleLinkClick} >
                 ¿ya estás registrado? Inicia sesión
               </Link>
             </Grid>

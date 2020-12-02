@@ -104,7 +104,8 @@ export default function Dashboard() {
         members.forEach(async m => {
           await db.collection('users').doc(m).update({
             groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
-            [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+            [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete(),
+            [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
           })
         })
         requesters.forEach(async r => {
@@ -125,7 +126,8 @@ export default function Dashboard() {
         groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
         userReference.update({
           groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
-          [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+          [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete(),
+          [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
         })
         dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
         dispatch(setShowDashboard(false))
@@ -206,7 +208,17 @@ export default function Dashboard() {
   }
 
   function resetShuffle() {
+    // reset los wish y los ratigns de los usuarios del grupo
+    selectedGroup.users.forEach(u => {
+      db.collection('users').doc(u).update({
+        [`wishes.${selectedGroup.groupName}`]: "¡Cualquier cosa!",
+        [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+      })
+    })
     db.collection('groups').doc(selectedGroup.groupName).update({ shuffleStage: false, giversReceivers: {}, shufflers: [] })
+    .then(() => {
+      dispatch(setSnackbar({show: true, severity: 'info', message: 'El grupo se ha reinicido para realizar un nuevo sorteo.'}))
+    })
   }
 
   function getReceiverData() {

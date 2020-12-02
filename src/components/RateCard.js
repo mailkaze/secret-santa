@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { makeStyles } from '@material-ui/core/styles';
 import Card from '@material-ui/core/Card';
@@ -6,7 +6,6 @@ import CardContent from '@material-ui/core/CardContent';
 import { withStyles } from '@material-ui/core/styles';
 import Rating from '@material-ui/lab/Rating';
 import StarBorderIcon from '@material-ui/icons/StarBorder';
-import FavoriteIcon from '@material-ui/icons/Favorite';
 import SentimentVeryDissatisfiedIcon from '@material-ui/icons/SentimentVeryDissatisfied';
 import SentimentDissatisfiedIcon from '@material-ui/icons/SentimentDissatisfied';
 import SentimentSatisfiedIcon from '@material-ui/icons/SentimentSatisfied';
@@ -15,6 +14,9 @@ import SentimentVerySatisfiedIcon from '@material-ui/icons/SentimentVerySatisfie
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import { Button } from '@material-ui/core';
+import { useSelector, useDispatch } from 'react-redux'
+import { setSnackbar } from '../redux/actions.js'
+import { db } from '../firebase'
 
 const StyledRating = withStyles({
   iconFilled: {
@@ -77,23 +79,68 @@ IconContainer.propTypes = {
 
 export default function RateCard() {
   const classes = useStyles();
+
+  const [showStars, setShowStars] = useState(false)
+  const [rating, setRating] = useState(2.5)
+  const user = useSelector(state => state.user)
+  const selectedGroup = useSelector(state => state.selectedGroup)
+  const dispatch = useDispatch()
+
+  function hasRated() {
+    const myRates = Object.keys(user.ratings)
+    if (myRates.includes(selectedGroup.groupName)) {
+      return true
+    }
+    return false
+  }
+
+  function handleChange(e) {
+    setRating(Number.parseFloat(e.target.value))
+  }
+
+  function handleSubmitRating() {
+    console.log('Enviando el ratign', rating)
+    db.collection('users').doc(user.uid).update({
+      [`ratings.${selectedGroup.groupName}`]: rating
+    })
+    .then(() => {
+      dispatch(setSnackbar({show: true, severity: 'info', message: 'Tu calificación se ha guardado.'}))
+    })
+  }
+
+  useEffect(() => {
+    console.log('user.ratings', user.ratings)
+    if (Object.keys(user.ratings).length > 0) {
+      console.log('el objeto ratigns del usuario tiene un length mayor que cero.')
+      if (user.ratings[selectedGroup.groupName]) {
+        console.log('existe el rating de este grupo')
+        setRating(user.ratings[selectedGroup.groupName])
+      }
+    }
+  }, [])
+   
   return (
     <Card className={classes.root}>
       <CardContent>
-        <Button color='primary'>Ya recibí mi regalo</Button>
-        <Box component="fieldset" mb={3} borderColor="transparent">
+        {!hasRated() && !showStars && <Button variant="contained" color='primary' onClick={() => setShowStars(true)} >Ya recibí mi regalo</Button>}
+        {(showStars || hasRated()) && <Box component="fieldset" mb={3} borderColor="transparent">
           <Typography component="legend">
-            Cuando hayas recibido tu regalo puedes calificarlo. Este dato es anónimo, 
-            los demás miembros no conocerán tu calificación.
+            {
+              hasRated() 
+              ? 'Ésta es la calificación que has dado a tu regalo, puedes cambiarla si quieres.'
+              : 'Ahora puedes calificar el regalo que recibiste. Este dato es anónimo, los demás miembros no conocerán tu calificación.'
+            }
           </Typography>
           <Rating
             name="customized-empty"
-            defaultValue={2.5}
+            value={rating}
             precision={0.5}
+            onChange={handleChange}
             emptyIcon={<StarBorderIcon fontSize="inherit" />}
           />
-        </Box>
-        <Button color='primary'>Enviar calificación</Button>
+          <Button variant="contained" color='primary' onClick={handleSubmitRating} >Enviar calificación</Button>
+        </Box>}
+        
       </CardContent>
     </Card>
   );

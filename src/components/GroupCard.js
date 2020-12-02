@@ -94,7 +94,8 @@ export default function GroupCard({groupName}) {
             members.forEach(async m => {
               await db.collection('users').doc(m).update({
                 groups: firebase.firestore.FieldValue.arrayRemove(groupName),
-                [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
+                [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete(),
+                [`ratings.${groupName}`]: firebase.firestore.FieldValue.delete()
               })
             })
             requesters.forEach(async r => {
@@ -113,7 +114,8 @@ export default function GroupCard({groupName}) {
             groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
             userReference.update({
               groups: firebase.firestore.FieldValue.arrayRemove(groupName),
-              [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete()
+              [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete(),
+              [`ratings.${groupName}`]: firebase.firestore.FieldValue.delete()
             })
             dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
             dispatch(setSearch(''))

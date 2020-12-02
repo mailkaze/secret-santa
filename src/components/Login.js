@@ -11,7 +11,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
 import { auth } from '../firebase'
 import { useDispatch } from 'react-redux'
-import { setShowLogin } from '../redux/actions';
+import { setShowLogin, setShowSignUp } from '../redux/actions';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -70,6 +70,11 @@ export default function SignIn() {
     })
   }
 
+  function handleLinkClick() {
+    dispatch(setShowLogin(false))
+    dispatch(setShowSignUp(true)) 
+  }
+
   return (
     <Container component="main" maxWidth="xs">
       <CssBaseline />
@@ -121,7 +126,7 @@ export default function SignIn() {
               </Link>
             </Grid>
             <Grid item>
-              <Link href="#" variant="body2">
+              <Link href="#" variant="body2" onClick={handleLinkClick} >
                 {"¿No tienes una cuenta? Regístrate"}
               </Link>
             </Grid>
