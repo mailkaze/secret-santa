@@ -8,6 +8,11 @@ import NewGroupModal from './NewGroupModal';
 import { db } from '../firebase';
 import { useSelector, useDispatch } from 'react-redux'
 import { setUser, setSnackbar } from '../redux/actions'
+import styled from 'styled-components'
+
+const StyledGroupsList = styled.div`
+  background-color: #edf2f4;
+`
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -67,7 +72,7 @@ export default function GroupsList() {
   }, [])
 
   return (
-    <div>
+    <StyledGroupsList>
       <SearchField />
       <NewGroupModal />
       <div className={classes.list}>
@@ -80,6 +85,6 @@ export default function GroupsList() {
       <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>
-    </div>
+    </StyledGroupsList>
   )
 }

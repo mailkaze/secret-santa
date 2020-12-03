@@ -14,7 +14,7 @@ import { setShowDashboard,
         setSearch, 
         setSnackbar } from '../redux/actions'
 import { db } from '../firebase'
-import firebase from 'firebase'
+import firebase from 'firebase/app'
 
 const useStyles = makeStyles((theme) => ({
   root: {

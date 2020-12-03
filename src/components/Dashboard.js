@@ -5,11 +5,13 @@ import { setSelectedGroup, setShowDashboard, setSnackbar } from  '../redux/actio
 import SimpleList from './List'
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
-import { Icon } from '@material-ui/core';
+import { Icon, Typography } from '@material-ui/core';
 import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
+import Tooltip from '@material-ui/core/Tooltip';
+import Zoom from '@material-ui/core/Zoom';
 import { db } from '../firebase'
-import firebase from 'firebase'
+import firebase from 'firebase/app'
 import PresentCard from './presentCard'
 import ShuffleModal from './shuffleModal'
 import RateCard from './RateCard'
@@ -17,6 +19,20 @@ import RateCard from './RateCard'
 const DashboardStyled = styled.div`
   width: 100%;
   height: 100%;
+  position: relative;
+
+  #close-button {
+    font-size: 2.4em;
+    position: absolute;
+    top: 0;
+    left: 4px;
+    margin-left: 5px;
+  }
+
+  h5 {
+    margin-top: 10px;
+    font-weight: 500;
+  }
 
   #readyButton {
     margin-top: 8px;
@@ -37,6 +53,14 @@ const DashboardStyled = styled.div`
     margin-top:8px;
     height: .5em;
     padding-top: 10px;
+  }
+
+  #gift-image {
+    height: 40px;
+  }
+
+  #shuffle-text {
+    margin-left: 10px;
   }
 `
 
@@ -204,7 +228,6 @@ export default function Dashboard() {
         setShuffleNames(shuffleNames => [...shuffleNames, doc.data().name])
       })
     })
-    //TODO: mostrar estrellas
   }
 
   function resetShuffle() {
@@ -262,8 +285,16 @@ export default function Dashboard() {
 
   return (
     <DashboardStyled>
-      <Icon onClick={handleClose} >close</Icon>
-      <h2>Grupo {selectedGroup.groupName}</h2>
+      <Tooltip 
+        placement="top" 
+        TransitionComponent={Zoom} 
+        disableFocusListener 
+        title="Volver a la lista de grupos" 
+        arrow>
+        <Icon onClick={handleClose} id="close-button" >arrow_back</Icon>
+      </Tooltip>
+      <Typography variant="h5" >{selectedGroup.groupName}</Typography>
+      
       {isAdmin && <p>Eres el administrador de este grupo.</p>}
       { isAdmin 
         ? (!selectedGroup.shuffleStage && <Button variant="contained" color="primary" id="readyButton" onClick={onReady} >
@@ -285,7 +316,7 @@ export default function Dashboard() {
         selectedGroup.shuffleStage &&
           (!selectedGroup.shufflers.includes(user.uid)
           ? (<Button variant="contained" color="secondary" id="readyButton" size="large" onClick={illusion} >
-              🎁 SORTEAR
+              <img src="/caja-de-regalo.svg" id="gift-image" alt="gift" /><span id="shuffle-text">SORTEAR</span>
             </Button>)
           : (<div>
               <PresentCard name={receiverName} wish={receiverWish} />
@@ -294,7 +325,7 @@ export default function Dashboard() {
       }
       {showShuffleModal && <ShuffleModal show={showShuffleModal} setShow={setShowShuffleModal} names={shuffleNames} receiver={receiverName} />}
       <div className="members">
-        <h4>Miembros de este grupo:</h4>
+        <Typography variant="button" >Miembros de este grupo:</Typography>
         { members.length > 0 && <SimpleList people={members} member={true} isAdmin={isAdmin} />}
       </div>
 

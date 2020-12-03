@@ -7,7 +7,7 @@ import NewGroupButton from './NewGroupButton';
 import { db } from '../firebase'
 import { useSelector, useDispatch } from 'react-redux'
 import { setSnackbar } from '../redux/actions'
-import firebase from 'firebase'
+import firebase from 'firebase/app'
 
 const useStyles = makeStyles((theme) => ({
   paper: {
