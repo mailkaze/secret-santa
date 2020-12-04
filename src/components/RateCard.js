@@ -135,6 +135,7 @@ export default function RateCard() {
             name="customized-empty"
             value={rating}
             precision={0.5}
+            size="large"
             onChange={handleChange}
             emptyIcon={<StarBorderIcon fontSize="inherit" />}
           />

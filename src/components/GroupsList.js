@@ -12,6 +12,9 @@ import styled from 'styled-components'
 
 const StyledGroupsList = styled.div`
   background-color: #edf2f4;
+  height: 100vh;
+  padding-top: 8px;
+  z-index: 0;
 `
 
 function Alert(props) {
@@ -74,7 +77,6 @@ export default function GroupsList() {
   return (
     <StyledGroupsList>
       <SearchField />
-      <NewGroupModal />
       <div className={classes.list}>
         <h4>Grupos:</h4>
         {search === '' 
@@ -82,6 +84,7 @@ export default function GroupsList() {
           : groupNames.map(g => <GroupCard groupName={g} key={g} />)
         }
       </div>
+      <NewGroupModal />
       <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>

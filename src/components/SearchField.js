@@ -3,12 +3,13 @@ import { makeStyles } from '@material-ui/core/styles';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 import { Icon } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
 import { useDispatch } from 'react-redux'
 import { setSearch } from '../redux/actions'
 
 const useStyles = makeStyles((theme) => ({
   margin: {
-    margin: theme.spacing(1),
+    // margin: theme.spacing(1),
     display: 'block',
   },
 }));
@@ -40,14 +41,17 @@ export default function SearchField() {
         placeholder="Buscar grupos"
         InputProps={{
           startAdornment: (
-            <InputAdornment position="start" onClick={handleSearch}>
-              <Icon>search</Icon>
+            <InputAdornment position="start" onClick={handleReset}>
+              <Icon>close</Icon>
             </InputAdornment>
           ),
           endAdornment: (
-            <InputAdornment position="end" onClick={handleReset}>
-              <Icon>close</Icon>
-            </InputAdornment>
+            
+            <InputAdornment position="end" onClick={handleSearch}>
+            <Button variant="contained" color="primary" id="readyButton" type="submit">
+              <Icon>search</Icon>
+            </Button>
+          </InputAdornment>
           )
         }}
         value={searchTerm}

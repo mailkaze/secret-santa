@@ -8,6 +8,7 @@ import SignUp from './components/SignUp';
 import Login from './components/Login'
 import GroupsList from './components/GroupsList';
 import Dashboard from './components/Dashboard'
+import Welcome from './components/Welcome';
 
 function App() {
   const user = useSelector(state => state.user)
@@ -49,7 +50,7 @@ function App() {
               ? <Dashboard />
               : <GroupsList /> // ...y si no, mostramos la lista de grupos...
             )// ...si no hay usuario mostramos la pantalla de bienvenida.
-          : <p>inicia sesión o regístrate para empezar ;)</p>
+          : <Welcome />
         ) 
       }
 

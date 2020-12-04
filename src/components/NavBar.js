@@ -19,7 +19,6 @@ const StyledNavBar = styled.div`
     
   }
   .MuiToolbar-regular {
-    width: 100%;
     padding: 0 0 0 10px;
     display: flex;
     align-items: center;
