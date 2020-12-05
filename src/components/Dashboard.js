@@ -128,6 +128,7 @@ export default function Dashboard() {
         members.forEach(async m => {
           await db.collection('users').doc(m).update({
             groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
+            requests: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
             [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete(),
             [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
           })
@@ -146,15 +147,20 @@ export default function Dashboard() {
       }
     } else {
       // salir del grupo
-      if (window.confirm('¿Abandonar de este grupo?')) {
-        groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
-        userReference.update({
-          groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
-          [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete(),
-          [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
-        })
-        dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
-        dispatch(setShowDashboard(false))
+      
+      if (selectedGroup.shuffleStage === true) {
+        dispatch(setSnackbar({show: true, severity: 'error', message: 'No se puede abandonar el grupo durante la fase de sorteo.'}))
+      } else {
+        if (window.confirm('¿Abandonar este grupo?')) {
+          groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
+          userReference.update({
+            groups: firebase.firestore.FieldValue.arrayRemove(selectedGroup.groupName),
+            [`wishes.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete(),
+            [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+          })
+          dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
+          dispatch(setShowDashboard(false))
+        }
       }
     }
   }
@@ -232,16 +238,18 @@ export default function Dashboard() {
 
   function resetShuffle() {
     // reset los wish y los ratigns de los usuarios del grupo
-    selectedGroup.users.forEach(u => {
-      db.collection('users').doc(u).update({
-        [`wishes.${selectedGroup.groupName}`]: "¡Cualquier cosa!",
-        [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+    if (window.confirm('¿Quieres borrar todos los datos de este intercambio de regalos para empezar uno nuevo? No se borrarán los miembros del grupo ni las solicitudes de ingreso')) {
+      selectedGroup.users.forEach(u => {
+        db.collection('users').doc(u).update({
+          [`wishes.${selectedGroup.groupName}`]: "¡Cualquier cosa!",
+          [`ratings.${selectedGroup.groupName}`]: firebase.firestore.FieldValue.delete()
+        })
       })
-    })
-    db.collection('groups').doc(selectedGroup.groupName).update({ shuffleStage: false, giversReceivers: {}, shufflers: [] })
-    .then(() => {
-      dispatch(setSnackbar({show: true, severity: 'info', message: 'El grupo se ha reinicido para realizar un nuevo sorteo.'}))
-    })
+      db.collection('groups').doc(selectedGroup.groupName).update({ shuffleStage: false, giversReceivers: {}, shufflers: [] })
+      .then(() => {
+        dispatch(setSnackbar({show: true, severity: 'info', message: 'El grupo se ha reinicido para realizar un nuevo sorteo.'}))
+      })
+    }
   }
 
   function getReceiverData() {
@@ -267,6 +275,9 @@ export default function Dashboard() {
       getMembers()
       getRequesters()
       getReceiverData()
+      if (!selectedGroup.users.includes(user.uid)) {
+        dispatch(setShowDashboard(false))
+      }
     } 
   }, [selectedGroup])
 
@@ -295,12 +306,12 @@ export default function Dashboard() {
       </Tooltip>
       <Typography variant="h5" >{selectedGroup.groupName}</Typography>
       
-      {isAdmin && <p>Eres el administrador de este grupo.</p>}
+      {isAdmin && <Typography variant="body2">Eres el administrador de este grupo.</Typography>}
       { isAdmin 
         ? (!selectedGroup.shuffleStage && <Button variant="contained" color="primary" id="readyButton" onClick={onReady} >
             Listo para sorteo
           </Button>)
-        : <p>Esperando a que se complete el grupo...</p>
+        : (!selectedGroup.shuffleStage && <Typography variant="body2">Esperando a que se complete el grupo...</Typography>)
       }
       <form onSubmit={updateWish} >
         <TextField

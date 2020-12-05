@@ -9,9 +9,11 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 import { auth } from '../firebase'
-import { useDispatch } from 'react-redux'
-import { setShowLogin, setShowSignUp } from '../redux/actions';
+import { useSelector, useDispatch } from 'react-redux'
+import { setShowLogin, setShowSignUp, setSnackbar } from '../redux/actions';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -33,12 +35,17 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
 export default function SignIn() {
   const classes = useStyles();
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(false)
+  const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
 
   function onChange(e) {
@@ -74,6 +81,25 @@ export default function SignIn() {
     dispatch(setShowLogin(false))
     dispatch(setShowSignUp(true)) 
   }
+
+  function recoverPassword() {
+    if (email !== '') {
+      auth.sendPasswordResetEmail(email).then(function() {
+        dispatch(setSnackbar({show: true, severity: 'success', message: 'Se ha enviado un correo con instrucciones para recuperar tu contraseña, revisa tu email.'}))
+      }).catch(function(error) {
+        dispatch(setSnackbar({show: true, severity: 'error', message: 'No se pudo enviar el correo de recuperación, revisa la dirección email que has escrito y tu conexión a internet.'}))
+      });
+    } else {
+      dispatch(setSnackbar({show: true, severity: 'warning', message: 'Escribe tu correo electrónico en el campo correspondiente para que podamos enviarte el correo de recuperación.'}))
+    }
+  }
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    dispatch(setSnackbar({...snackbar, show: false}))
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -121,7 +147,7 @@ export default function SignIn() {
           </Button>
           <Grid container>
             <Grid item xs>
-              <Link href="#" variant="body2">
+              <Link href="#" variant="body2" onClick={recoverPassword} >
                 ¿Olvidaste tu contraseña?
               </Link>
             </Grid>
@@ -133,6 +159,9 @@ export default function SignIn() {
           </Grid>
         </form>
       </div>
+      <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
+      </Snackbar>
     </Container>
   );
 }

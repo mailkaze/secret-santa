@@ -94,6 +94,7 @@ export default function GroupCard({groupName}) {
             members.forEach(async m => {
               await db.collection('users').doc(m).update({
                 groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+                requests: firebase.firestore.FieldValue.arrayRemove(groupName),
                 [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete(),
                 [`ratings.${groupName}`]: firebase.firestore.FieldValue.delete()
               })
@@ -110,16 +111,24 @@ export default function GroupCard({groupName}) {
             })            
           }
         } else { // no eres administrador y solo sales del grupo:
-          if (window.confirm('¿Abandonar este grupo?')) {            
-            groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
-            userReference.update({
-              groups: firebase.firestore.FieldValue.arrayRemove(groupName),
-              [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete(),
-              [`ratings.${groupName}`]: firebase.firestore.FieldValue.delete()
-            })
-            dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
-            dispatch(setSearch(''))
-          }
+          groupReference.get()
+          .then(doc => {
+            if (doc.data().shuffleStage) {
+              dispatch(setSnackbar({show: true, severity: 'error', message: 'No se puede abandonar el grupo durante la fase de sorteo.'}))
+            } else {
+              if (window.confirm('¿Abandonar este grupo?')) {            
+                groupReference.update({users: firebase.firestore.FieldValue.arrayRemove(user.uid)})
+                userReference.update({
+                  groups: firebase.firestore.FieldValue.arrayRemove(groupName),
+                  [`wishes.${groupName}`]: firebase.firestore.FieldValue.delete(),
+                  [`ratings.${groupName}`]: firebase.firestore.FieldValue.delete()
+                })
+                dispatch(setSnackbar({show: true, severity: 'info', message: 'Has abandonado este grupo.'}))
+                dispatch(setSearch(''))
+              }
+            }
+          })
+          
         }
       })
     } else {

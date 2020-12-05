@@ -18,15 +18,6 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setSnackbar } from '../redux/actions.js'
 import { db } from '../firebase'
 
-const StyledRating = withStyles({
-  iconFilled: {
-    color: '#ff6d75',
-  },
-  iconHover: {
-    color: '#ff3d47',
-  },
-})(Rating);
-
 const useStyles = makeStyles({
   root: {
     minWidth: 275,
@@ -43,6 +34,16 @@ const useStyles = makeStyles({
   pos: {
     marginBottom: 12,
   },
+  stars: {
+    marginBottom: "8px",
+  },
+  cardContent: {
+    padding: "16px",
+  },
+  box: {
+    marginBottom: 0,
+    paddingBottom: 0,
+  }
 });
 
 const customIcons = {
@@ -121,9 +122,9 @@ export default function RateCard() {
    
   return (
     <Card className={classes.root}>
-      <CardContent>
+      <CardContent className={classes.cardContent}>
         {!hasRated() && !showStars && <Button variant="contained" color='primary' onClick={() => setShowStars(true)} >Ya recibí mi regalo</Button>}
-        {(showStars || hasRated()) && <Box component="fieldset" mb={3} borderColor="transparent">
+        {(showStars || hasRated()) && <Box component="fieldset" mb={3} borderColor="transparent" className={classes.box}>
           <Typography component="legend">
             {
               hasRated() 
@@ -136,6 +137,7 @@ export default function RateCard() {
             value={rating}
             precision={0.5}
             size="large"
+            className={classes.stars}
             onChange={handleChange}
             emptyIcon={<StarBorderIcon fontSize="inherit" />}
           />
