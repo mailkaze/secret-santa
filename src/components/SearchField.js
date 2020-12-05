@@ -39,12 +39,14 @@ export default function SearchField() {
         className={classes.margin}
         id="input-with-icon-textfield"
         placeholder="Buscar grupos"
+        type="search"
+        autocomplete="nope"
         InputProps={{
-          startAdornment: (
-            <InputAdornment position="start" onClick={handleReset}>
-              <Icon>close</Icon>
-            </InputAdornment>
-          ),
+          // startAdornment: (
+          //   <InputAdornment position="start" onClick={handleReset}>
+          //     <Icon>close</Icon>
+          //   </InputAdornment>
+          // ),
           endAdornment: (
             
             <InputAdornment position="end" onClick={handleSearch}>

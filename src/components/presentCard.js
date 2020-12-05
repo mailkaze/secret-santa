@@ -8,6 +8,9 @@ const useStyles = makeStyles({
   root: {
     minWidth: 275,
     margin: '5px 5%',
+    backgroundColor: "#dc004e",
+    color: "white",
+    marginBottom: "10px",
   },
   bullet: {
     display: 'inline-block',
@@ -16,6 +19,7 @@ const useStyles = makeStyles({
   },
   title: {
     fontSize: 14,
+    color: "white",
   },
   pos: {
     marginBottom: 12,
@@ -31,11 +35,11 @@ export default function PresentCard({name, wish}) {
         <Typography className={classes.title} color="textSecondary" gutterBottom>
           Le regalas a...
         </Typography>
-        <Typography variant="h5" component="h2">
+        <Typography variant="h4" component="h4">
           {name}
         </Typography>
         <Typography variant="body2" component="p">
-          Le gustaría que le regalen...
+          Y le gustaría que le regalen...
           <br />
           {wish}
         </Typography>

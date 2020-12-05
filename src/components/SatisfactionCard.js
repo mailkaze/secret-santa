@@ -77,69 +77,29 @@ IconContainer.propTypes = {
   value: PropTypes.number.isRequired,
 };
 
-export default function RateCard() {
+export default function SatisfactionCard({mean}) {
   const classes = useStyles();
-
-  const [showStars, setShowStars] = useState(false)
-  const [rating, setRating] = useState(2.5)
-  const user = useSelector(state => state.user)
-  const selectedGroup = useSelector(state => state.selectedGroup)
-  const dispatch = useDispatch()
-
-  function hasRated() {
-    const myRates = Object.keys(user.ratings)
-    if (myRates.includes(selectedGroup.groupName)) {
-      return true
-    }
-    return false
-  }
-
-  function handleChange(e) {
-    setRating(Number.parseFloat(e.target.value))
-  }
-
-  function handleSubmitRating() {
-    console.log('Enviando el ratign', rating)
-    db.collection('users').doc(user.uid).update({
-      [`ratings.${selectedGroup.groupName}`]: rating
-    })
-    .then(() => {
-      dispatch(setSnackbar({show: true, severity: 'info', message: 'Tu calificación se ha guardado.'}))
-    })
-  }
-
-  useEffect(() => {
-    if (Object.keys(user.ratings).length > 0) {
-      if (user.ratings[selectedGroup.groupName]) {
-        setRating(user.ratings[selectedGroup.groupName])
-      }
-    }
-  }, [])
    
   return (
     <Card className={classes.root}>
       <CardContent className={classes.cardContent}>
-        {!hasRated() && !showStars && <Button variant="contained" color='primary' onClick={() => setShowStars(true)} >Ya recibí mi regalo</Button>}
-        {(showStars || hasRated()) && <Box component="fieldset" mb={3} borderColor="transparent" className={classes.box}>
+        <Box component="fieldset" mb={3} borderColor="transparent" className={classes.box}>
           <Typography component="legend">
-            {
-              hasRated() 
-              ? 'Ésta es la calificación que has dado a tu regalo, puedes cambiarla si quieres.'
-              : 'Ahora puedes calificar el regalo que recibiste. Este dato es anónimo y los demás miembros no conocerán tu calificación.'
-            }
+            Más de la mitad de miembros del grupo votaron el regalo que recibieron, como resultado, esta es la media de satisfacción del grupo:
           </Typography>
           <Rating
             name="customized-empty"
-            value={rating}
+            value={mean}
             precision={0.5}
             size="large"
+            readOnly 
             className={classes.stars}
-            onChange={handleChange}
             emptyIcon={<StarBorderIcon fontSize="inherit" />}
           />
-          <Button variant="contained" color='primary' onClick={handleSubmitRating} >Enviar calificación</Button>
-        </Box>}
-        
+          <Typography component="legend">
+            Parece que hay que esforzarse más...
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );

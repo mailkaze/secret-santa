@@ -15,11 +15,14 @@ import firebase from 'firebase/app'
 import PresentCard from './presentCard'
 import ShuffleModal from './shuffleModal'
 import RateCard from './RateCard'
+import SatisfactionCard from './SatisfactionCard'
 
 const DashboardStyled = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
+  padding-bottom: 16px;
+  /* background-color: #83c5be; */
 
   #close-button {
     font-size: 2.4em;
@@ -36,6 +39,11 @@ const DashboardStyled = styled.div`
 
   #readyButton {
     margin-top: 8px;
+  }
+
+  #shuffleButton {
+    margin-bottom: 20px;
+    padding: 10px 30px;
   }
 
   form {
@@ -77,6 +85,8 @@ export default function Dashboard() {
   const [shuffleNames, setShuffleNames] = useState([])
   const [receiverName, setReceiverName] = useState('')
   const [receiverWish, setReceiverWish] = useState('')
+  const [ratings, setRatings] = useState([])
+  const [showSatisfaction, setShowSatisfaction] = useState(false)
   const selectedGroup = useSelector(state => state.selectedGroup)
   const user = useSelector(state => state.user)
   const snackbar = useSelector(state => state.snackbar)
@@ -266,6 +276,19 @@ export default function Dashboard() {
     }
   }
 
+  function setGroupSatisfaction() {
+    if (selectedGroup.shuffleStage) {
+      setRatings([])
+      selectedGroup.users.forEach(async member => {
+        const doc = await db.collection('users').doc(member).get()
+        if (doc.data().ratings[selectedGroup.groupName]) {
+          console.log('encontrado un rating')
+          setRatings(ratings => [...ratings, doc.data().ratings[selectedGroup.groupName]])
+        }
+      })
+    }
+  }
+
   useEffect(() => {
     // si ya tenemos los datos del grupo, podemos traer los de sus personas:
     console.log('SELECTED-GROUP:', selectedGroup.groupName)
@@ -275,6 +298,7 @@ export default function Dashboard() {
       getMembers()
       getRequesters()
       getReceiverData()
+      setGroupSatisfaction()
       if (!selectedGroup.users.includes(user.uid)) {
         dispatch(setShowDashboard(false))
       }
@@ -293,6 +317,20 @@ export default function Dashboard() {
       setShowShuffleModal(true)
     }
   },[shuffleNames])
+
+  useEffect(() => {
+    // si ya votaron su regalo más de la mitad de los miembros:
+    // console.log(`ratings.length: ${ratings.length}, selectedGroup.users.length ${selectedGroup.users.length}`)
+    if (ratings.length > 0) {
+      if (ratings.length >= (selectedGroup.users.length / 2)) {
+        const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length
+        console.log('la media de satisfacción del grupo es de', mean)
+        setShowSatisfaction(true)
+      } else {
+        console.log('aun no votaron suficientes personas, solo fueron:', ratings.length)
+      }
+    }
+  }, [ratings])
 
   return (
     <DashboardStyled>
@@ -326,7 +364,7 @@ export default function Dashboard() {
       {
         selectedGroup.shuffleStage &&
           (!selectedGroup.shufflers.includes(user.uid)
-          ? (<Button variant="contained" color="secondary" id="readyButton" size="large" onClick={illusion} >
+          ? (<Button variant="contained" color="secondary" id="shuffleButton" size="large" onClick={illusion} >
               <img src="/caja-de-regalo.svg" id="gift-image" alt="gift" /><span id="shuffle-text">SORTEAR</span>
             </Button>)
           : (<div>
@@ -334,6 +372,7 @@ export default function Dashboard() {
               <RateCard />
             </div>))
       }
+      {setShowSatisfaction && <SatisfactionCard mean={ratings.reduce((a, b) => a + b, 0) / ratings.length} />}
       {showShuffleModal && <ShuffleModal show={showShuffleModal} setShow={setShowShuffleModal} names={shuffleNames} receiver={receiverName} />}
       <div className="members">
         <Typography variant="button" >Miembros de este grupo:</Typography>

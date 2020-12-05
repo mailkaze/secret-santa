@@ -1,19 +1,19 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Kaze's Secret Santa",
+  "name": "App de intercambio de regalos para grupos",
   "icons": [
     {
-      "src": "favicon.ico",
+      "src": "sombrero-de-santa.svg",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
     },
     {
-      "src": "logo192.png",
+      "src": "sombrero-de-santa.svg",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "logo512.png",
+      "src": "sombrero-de-santa.svg",
       "type": "image/png",
       "sizes": "512x512"
     }

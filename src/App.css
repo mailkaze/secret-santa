@@ -1,3 +1,8 @@
+body {
+  max-width: 500px;
+  margin: auto;
+}
+
 .App {
   text-align: center;
 }

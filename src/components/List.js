@@ -28,7 +28,7 @@ export default function SimpleList({people, member, isAdmin}) {
   const user = useSelector(state => state.user)
   const dispatch = useDispatch()
 
-  function handleClick(e) {
+  function handleClick(targetUid) {
     const groupName = selectedGroup.groupName
     if (isAdmin && !selectedGroup.shuffleStage) {
       if (member) {
@@ -37,25 +37,22 @@ export default function SimpleList({people, member, isAdmin}) {
         if (window.confirm('¿Eliminar a esta persona del grupo?')) {
           // borrar su id de users
           db.collection('groups').doc(groupName).update({
-            users: firebase.firestore.FieldValue.arrayRemove(e.target.id),
+            users: firebase.firestore.FieldValue.arrayRemove(targetUid),
           })
           // borrar el nombre de selectedGroup de groups del usuario
-          db.collection('users').doc(e.target.id).update({
+          db.collection('users').doc(targetUid).update({
             groups: firebase.firestore.FieldValue.arrayRemove(groupName),
           })
           dispatch(setSnackbar({show: true, severity: 'success', message: 'Usuario expulsado con éxito.'}))
         }
       } else {
         // añadir su id a users y quitarlo de requests
-        // para testing con Hassán:
-        console.log('e.target.id del requester:', e.target.id)
-        console.log('Qué elemento disparó el click:', e.target)
         db.collection('groups').doc(groupName).update({
-          users: firebase.firestore.FieldValue.arrayUnion(e.target.id),
-          requests: firebase.firestore.FieldValue.arrayRemove(e.target.id)
+          users: firebase.firestore.FieldValue.arrayUnion(targetUid),
+          requests: firebase.firestore.FieldValue.arrayRemove(targetUid)
         })
         // añadir el nombre de selectedGroup a groups del usuario y borrarlo de requests
-        db.collection('users').doc(e.target.id).update({
+        db.collection('users').doc(targetUid).update({
           groups: firebase.firestore.FieldValue.arrayUnion(groupName),
           requests: firebase.firestore.FieldValue.arrayRemove(groupName),
           [`wishes.${groupName}`]: '¡Cualquier cosa!'
@@ -92,7 +89,7 @@ export default function SimpleList({people, member, isAdmin}) {
                             disableFocusListener 
                             title="Expulsar miembro" 
                             arrow>
-                            <Icon onClick={handleClick} id={p.uid} >person_remove_alt_1</Icon>
+                            <Icon onClick={() => handleClick(p.uid)} >person_remove_alt_1</Icon>
                           </Tooltip>
                         )
                         : (
@@ -102,7 +99,7 @@ export default function SimpleList({people, member, isAdmin}) {
                             disableFocusListener 
                             title="Incluir a esta persona en el grupo" 
                             arrow>
-                            <Icon onClick={handleClick} id={p.uid} >person_add_alt_1</Icon>
+                            <Icon onClick={() => handleClick(p.uid)} >person_add_alt_1</Icon>
                           </Tooltip>  
                         )
                       )

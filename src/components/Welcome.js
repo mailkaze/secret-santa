@@ -5,7 +5,7 @@ import Typography from '@material-ui/core/Typography';
 
 const WelcomeStyled = styled.div`
  height: 100vh;
- width: 100vw;
+ width: 100%;
  background-color: #2b2d42;
  color: #edf2f4;
 

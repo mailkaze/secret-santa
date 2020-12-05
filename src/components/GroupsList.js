@@ -14,7 +14,6 @@ const StyledGroupsList = styled.div`
   background-color: #edf2f4;
   height: 100vh;
   padding-top: 8px;
-  z-index: 0;
 `
 
 function Alert(props) {
