@@ -78,7 +78,7 @@ export default function GroupsList() {
       <SearchField />
       <div className={classes.list}>
         <h4>Grupos:</h4>
-        {search === '' 
+        {search === '' && user !== null
           ? user.groups.map(g => <GroupCard groupName={g} key={g} />)
           : groupNames.map(g => <GroupCard groupName={g} key={g} />)
         }

@@ -20,17 +20,15 @@ export default function SearchField() {
   const dispatch = useDispatch()
 
   function handleChange(e) {
+    if (e.target.value === '') {
+      dispatch(setSearch(''))
+    }
     setSearchTerm(e.target.value)
   }
 
   function handleSearch(e) {
     e.preventDefault()
     dispatch(setSearch(searchTerm.toLowerCase()))
-  }
-
-  function handleReset() {
-    setSearchTerm('')
-    dispatch(setSearch(''))
   }
 
   return (
@@ -40,7 +38,7 @@ export default function SearchField() {
         id="input-with-icon-textfield"
         placeholder="Buscar grupos"
         type="search"
-        autocomplete="nope"
+        autoComplete="nope"
         InputProps={{
           // startAdornment: (
           //   <InputAdornment position="start" onClick={handleReset}>

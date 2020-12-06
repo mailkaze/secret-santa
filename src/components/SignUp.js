@@ -9,9 +9,11 @@ import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Container from '@material-ui/core/Container';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 import { auth, db } from '../firebase'
-import { setShowSignUp, setShowLogin } from '../redux/actions'
-import { useDispatch } from 'react-redux'
+import { setShowSignUp, setShowLogin, setSnackbar } from '../redux/actions'
+import { useSelector, useDispatch } from 'react-redux'
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -33,6 +35,10 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
 export default function SignUp() {
   const classes = useStyles();
 
@@ -40,7 +46,7 @@ export default function SignUp() {
   const [email, setEmail] = useState('')
   const [password1, setPassword1] = useState('')
   const [password2, setPassword2] = useState('')
-  const [error, setError] = useState(false)
+  const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
 
   function onChange(e) {
@@ -67,9 +73,8 @@ export default function SignUp() {
     if (name && email && password1 && password2) {
       if (password1 === password2) {
         if (password1.length >= 8) {
-          auth.createUserWithEmailAndPassword(email, password1)
+          auth.createUserWithEmailAndPassword(email.trim(), password1)
           .then( userCredential => {
-            setError(false) 
             setName('')
             setEmail('')
             setPassword1('')
@@ -87,20 +92,22 @@ export default function SignUp() {
             .then(() => dispatch(setShowSignUp(false)))
           })
           .catch(error => {
-            // TODO: errores del lado del servidor
+            if (error.code === 'auth/invalid-email') {
+              dispatch(setSnackbar({show: true, severity: 'error', message: `Dirección de email no váida.`}))
+            } else {
+              dispatch(setSnackbar({show: true, severity: 'error', message: `Error: ${error.message} Código del error: ${error.code}`}))
+            }
           })
         } else {
-          console.log('La contraseña debe tener al menos 8 caracteres')
-          // TODO: mostrar los errores al usuario
-          setError(true)
+          dispatch(setSnackbar({show: true, severity: 'error', message: `La contraseña debe tener al menos 8 caracteres.`}))
+
         }
       } else {
-        console.log('las contraseñas no son iguales')
-        setError(true)
+        dispatch(setSnackbar({show: true, severity: 'error', message: `Las contraseñas no son iguales.`}))
+
       }
     } else {
-      console.log('algunos campos están vacíos')
-      setError(true)
+      dispatch(setSnackbar({show: true, severity: 'error', message: `Debe llenar todos los datos.`}))
     }
   }
 
@@ -108,6 +115,13 @@ export default function SignUp() {
     dispatch(setShowSignUp(false))
     dispatch(setShowLogin(true))
   }
+
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    dispatch(setSnackbar({...snackbar, show: false}))
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -190,9 +204,9 @@ export default function SignUp() {
             </Grid>
           </Grid>
         </form>
-        {
-          error && <p>*revisa que los datos sean correctos.</p>
-        }
+        <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+          <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
+        </Snackbar>
       </div>
     </Container>
   );

@@ -85,7 +85,7 @@ export default function SatisfactionCard({mean}) {
       <CardContent className={classes.cardContent}>
         <Box component="fieldset" mb={3} borderColor="transparent" className={classes.box}>
           <Typography component="legend">
-            Más de la mitad de miembros del grupo votaron el regalo que recibieron, como resultado, esta es la media de satisfacción del grupo:
+            Más de la mitad de miembros del grupo votaron el regalo que recibieron, como resultado, ésta es la media de satisfacción del grupo:
           </Typography>
           <Rating
             name="customized-empty"
@@ -97,7 +97,14 @@ export default function SatisfactionCard({mean}) {
             emptyIcon={<StarBorderIcon fontSize="inherit" />}
           />
           <Typography component="legend">
-            Parece que hay que esforzarse más...
+            {mean < 3
+             ? mean < 2.5
+               ? '¡Oh no! La gente no ha quedado muy contenta...'
+               : 'Parece que hay que esforzarse más...'
+             : mean < 4.5
+               ? 'Está bien, pero se puede mejorar.' 
+               : '¡Bien hecho!'
+            }
           </Typography>
         </Box>
       </CardContent>

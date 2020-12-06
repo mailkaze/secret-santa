@@ -372,7 +372,7 @@ export default function Dashboard() {
               <RateCard />
             </div>))
       }
-      {setShowSatisfaction && <SatisfactionCard mean={ratings.reduce((a, b) => a + b, 0) / ratings.length} />}
+      {(selectedGroup.shuffleStage && showSatisfaction) && <SatisfactionCard mean={ratings.reduce((a, b) => a + b, 0) / ratings.length} />}
       {showShuffleModal && <ShuffleModal show={showShuffleModal} setShow={setShowShuffleModal} names={shuffleNames} receiver={receiverName} />}
       <div className="members">
         <Typography variant="button" >Miembros de este grupo:</Typography>
