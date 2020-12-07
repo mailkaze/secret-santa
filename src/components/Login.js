@@ -45,7 +45,6 @@ export default function SignIn() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState(false)
   const snackbar = useSelector(state => state.snackbar)
   const dispatch = useDispatch()
 
@@ -67,14 +66,23 @@ export default function SignIn() {
 
     auth.signInWithEmailAndPassword(email, password)
     .then(result => {
-      setError(false) 
       setEmail('')
       setPassword('')
       dispatch(setShowLogin(false))
     })
     .catch(error => {
       console.log(error.code, error.message)
-      // TODO: mostrar error al usuario
+      if (error.code === 'auth/user-not-found') {
+        dispatch(setSnackbar({show: true, severity: 'error', message: `Este email no tiene una cuenta en esta app, ¡Regístrate!`}))
+      } else if (error.code === 'auth/wrong-password') {
+        dispatch(setSnackbar({show: true, severity: 'error', message: `La contraseña no es correcta.`}))
+      } else if (error.code === 'auth/network-request-failed') {
+        dispatch(setSnackbar({show: true, severity: 'error', message: `No se ha podido conectar con el sistema, comprueba tu conexión a Internet.`}))
+      } else if (error.code === 'auth/invalid-email') {
+        dispatch(setSnackbar({show: true, severity: 'error', message: `Dirección de email no váida.`}))
+      } else {
+        dispatch(setSnackbar({show: true, severity: 'error', message: `Error: ${error.message} Código del error: ${error.code}`}))
+      }
     })
   }
 
