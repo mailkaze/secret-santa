@@ -99,7 +99,6 @@ export default function RateCard() {
   }
 
   function handleSubmitRating() {
-    console.log('Enviando el ratign', rating)
     db.collection('users').doc(user.uid).update({
       [`ratings.${selectedGroup.groupName}`]: rating
     })

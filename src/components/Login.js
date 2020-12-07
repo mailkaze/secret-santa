@@ -71,7 +71,6 @@ export default function SignIn() {
       dispatch(setShowLogin(false))
     })
     .catch(error => {
-      console.log(error.code, error.message)
       if (error.code === 'auth/user-not-found') {
         dispatch(setSnackbar({show: true, severity: 'error', message: `Este email no tiene una cuenta en esta app, ¡Regístrate!`}))
       } else if (error.code === 'auth/wrong-password') {

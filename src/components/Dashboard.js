@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import styled from 'styled-components'
 import { useSelector, useDispatch } from 'react-redux'
 import { setSelectedGroup, setShowDashboard, setSnackbar } from  '../redux/actions'
-import SimpleList from './List'
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import { Icon, Typography } from '@material-ui/core';
@@ -16,13 +15,14 @@ import PresentCard from './presentCard'
 import ShuffleModal from './shuffleModal'
 import RateCard from './RateCard'
 import SatisfactionCard from './SatisfactionCard'
+import MembersList from './MembersList'
+import RequestsList from './RequestsList'
 
 const DashboardStyled = styled.div`
   width: 100%;
   height: 100%;
   position: relative;
   padding-bottom: 16px;
-  /* background-color: #83c5be; */
 
   #close-button {
     font-size: 2.4em;
@@ -67,8 +67,20 @@ const DashboardStyled = styled.div`
     height: 40px;
   }
 
+  .members, .requests {
+    padding-top: 20px;
+  }
+
   #shuffle-text {
     margin-left: 10px;
+  }
+
+  #red-buttons {
+    margin: auto;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 `
 
@@ -78,8 +90,6 @@ function Alert(props) {
 
 export default function Dashboard() {
   const [isAdmin, setIsAdmin] = useState(false)
-  const [members, setMembers] = useState([])
-  const [requesters, setRequesters] = useState([])
   const [wish, setWish] = useState('¡Cualquier cosa!')
   const [showShuffleModal, setShowShuffleModal] = useState(false)
   const [shuffleNames, setShuffleNames] = useState([])
@@ -102,28 +112,6 @@ export default function Dashboard() {
   function handleClose() {
     dispatch(setSelectedGroup({}))
     dispatch(setShowDashboard(false))
-  }
-
-  function getMembers() {
-    setMembers([])
-    selectedGroup.users.forEach(userId => {
-      db.collection('users').doc(userId).get()
-      .then(doc => {
-        const member = {...doc.data(), uid: userId }
-        setMembers(members => [...members, member])
-      })
-    })
-  }
-  
-  function getRequesters() {
-    setRequesters([])
-    selectedGroup.requests.forEach(userId => {
-      db.collection('users').doc(userId).get()
-      .then(querySnapShot => {
-        const requester = {...querySnapShot.data(), uid: userId }
-        setRequesters(requesters => [...requesters, requester])
-      })
-    })
   }
 
   function onDelete() {
@@ -215,7 +203,6 @@ export default function Dashboard() {
     receivers.sort(() => Math.random() - 0.5)
     const giversReceivers = {}
     givers.forEach((key, i) => giversReceivers[key] = receivers[i])
-    console.log('Objeto giversReceivers sorteado:',giversReceivers)
     let perfectShuffle = true
     for (const key in giversReceivers) {
       if (key === giversReceivers[key]) {
@@ -223,10 +210,10 @@ export default function Dashboard() {
       }
     }
     if (perfectShuffle) {
-      console.log('todo salió perfecto, lo escribimos en la DB')
+      // todo salió perfecto, lo escribimos en la DB
       db.collection('groups').doc(selectedGroup.groupName).update({ giversReceivers: giversReceivers})
     } else {
-      console.log('No se sorteó bien, repetimos')
+      // No se sorteó bien, repetimos
       shuffle()
     }
   }
@@ -265,7 +252,6 @@ export default function Dashboard() {
   function getReceiverData() {
     if (selectedGroup.shuffleStage) {
       if (selectedGroup.shufflers.includes(user.uid)) {
-        console.log('este usuario ya sorteó y podemos mostrar a quien regala')
         const receiver = selectedGroup.giversReceivers[user.uid]
         db.collection('users').doc(receiver).get()
         .then((doc) => {
@@ -282,7 +268,6 @@ export default function Dashboard() {
       selectedGroup.users.forEach(async member => {
         const doc = await db.collection('users').doc(member).get()
         if (doc.data().ratings[selectedGroup.groupName]) {
-          console.log('encontrado un rating')
           setRatings(ratings => [...ratings, doc.data().ratings[selectedGroup.groupName]])
         }
       })
@@ -295,10 +280,9 @@ export default function Dashboard() {
     if (Object.keys(selectedGroup).length > 0) {
       setWish(user.wishes[selectedGroup.groupName])
       setIsAdmin(selectedGroup.admin === user.uid)
-      getMembers()
-      getRequesters()
       getReceiverData()
       setGroupSatisfaction()
+      // te saca del dashboard si te echan del grupo mientras estas en esta pantalla:
       if (!selectedGroup.users.includes(user.uid)) {
         dispatch(setShowDashboard(false))
       }
@@ -313,6 +297,7 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => {
+    // solo muestra la pantalla de sorteo cuando los nombres están en el array:
     if (shuffleNames.length > 0) {
       setShowShuffleModal(true)
     }
@@ -320,14 +305,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     // si ya votaron su regalo más de la mitad de los miembros:
-    // console.log(`ratings.length: ${ratings.length}, selectedGroup.users.length ${selectedGroup.users.length}`)
-    if (ratings.length > 0) {
+    if (ratings.length > 0) { // nos aseguramos de que los datos del grupo ya están cargados
       if (ratings.length >= (selectedGroup.users.length / 2)) {
-        const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length
-        console.log('la media de satisfacción del grupo es de', mean)
         setShowSatisfaction(true)
-      } else {
-        console.log('aun no votaron suficientes personas, solo fueron:', ratings.length)
       }
     }
   }, [ratings])
@@ -345,7 +325,7 @@ export default function Dashboard() {
       <Typography variant="h5" >{selectedGroup.groupName}</Typography>
       
       {isAdmin && <Typography variant="body2">Eres el administrador de este grupo.</Typography>}
-      { isAdmin 
+      {isAdmin 
         ? (!selectedGroup.shuffleStage && <Button variant="contained" color="primary" id="readyButton" onClick={onReady} >
             Listo para sorteo
           </Button>)
@@ -375,33 +355,33 @@ export default function Dashboard() {
       {(selectedGroup.shuffleStage && showSatisfaction) && <SatisfactionCard mean={ratings.reduce((a, b) => a + b, 0) / ratings.length} />}
       {showShuffleModal && <ShuffleModal show={showShuffleModal} setShow={setShowShuffleModal} names={shuffleNames} receiver={receiverName} />}
       <div className="members">
-        <Typography variant="button" >Miembros de este grupo:</Typography>
-        { members.length > 0 && <SimpleList people={members} member={true} isAdmin={isAdmin} />}
+        <Typography variant="button" className="list-titles" >Miembros de este grupo:</Typography>
+        <MembersList isAdmin={isAdmin} />
       </div>
 
-      { requesters.length > 0 && isAdmin && !selectedGroup.shuffleStage &&
+      { isAdmin && !selectedGroup.shuffleStage &&
         <div className="requests">
-          <h4>Solicitudes para unirse:</h4>
-          { <SimpleList people={requesters} member={false} isAdmin={isAdmin} />}
+          <Typography variant="button" className="list-titles" >Solicitudes para unirse:</Typography>
+          <RequestsList isAdmin={isAdmin} />
         </div>
       }
-      {isAdmin && 
-      <Button 
-        variant="contained"
-        color="secondary" 
-        onClick={resetShuffle}>
-          Reiniciar sorteo
-      </Button>}
-      <br />
-      <br />
-      <Button
-        variant="contained"
-        color="secondary"
-        startIcon={<Icon>{ isAdmin ? 'delete' : 'clear'}</Icon>}
-        onClick={onDelete}
-      >
-        { isAdmin ? 'eliminar grupo' : 'abandonar grupo'}
-      </Button>
+      <div id="red-buttons">
+        {isAdmin && 
+        <Button 
+          variant="contained"
+          color="secondary" 
+          onClick={resetShuffle}>
+            Reiniciar sorteo
+        </Button>}
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<Icon>{ isAdmin ? 'delete' : 'clear'}</Icon>}
+          onClick={onDelete}
+        >
+          { isAdmin ? 'eliminar grupo' : 'abandonar grupo'}
+        </Button>
+      </div>
       <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>{snackbar.message}</Alert>
       </Snackbar>

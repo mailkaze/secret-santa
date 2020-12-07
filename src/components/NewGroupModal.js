@@ -3,7 +3,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import Modal from '@material-ui/core/Modal';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import NewGroupButton from './NewGroupButton';
+import Icon from '@material-ui/core/Icon';
 import { db } from '../firebase'
 import { useSelector, useDispatch } from 'react-redux'
 import { setSnackbar } from '../redux/actions'
@@ -71,7 +71,7 @@ export default function NewGroupModal() {
         // Creamos el grupo
         groupRef.set(newGroup)
         .catch(error => {
-          console.log(error)
+          console.log('error al crear el grupo:', error)
         })
 
         //guardamos el id del grupo en el array de grupos del usuario:
@@ -85,7 +85,7 @@ export default function NewGroupModal() {
           handleClose()
         })
         .catch(error => {
-          console.log(error)
+          console.log('error creando los datos del grupo nuevo en el usuario:', error)
         })
       } else {
         dispatch(setSnackbar({show: true, severity: 'error', message: 'Ya existe un grupo con ese nombre.'}))
@@ -120,8 +120,16 @@ export default function NewGroupModal() {
 
   return (
     <div>
-      <div onClick={handleOpen}>
-        <NewGroupButton />
+      <div >
+      <Button
+        variant="contained"
+        color="primary"
+        className={classes.button}
+        startIcon={<Icon>add</Icon>}
+        onClick={handleOpen}
+      >
+        Crear grupo
+      </Button> 
       </div>
       <Modal
         open={open}

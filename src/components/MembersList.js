@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -22,52 +22,59 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function SimpleList({people, member, isAdmin}) {
+export default function MembersList({isAdmin}) {
   const classes = useStyles();
+
+  const [members, setMembers] = useState([])
   const selectedGroup = useSelector(state => state.selectedGroup)  
   const user = useSelector(state => state.user)
+  
   const dispatch = useDispatch()
+
+  function getMembers() {
+    // vaciamos la lista para que no se repitan
+    setMembers([])
+    // for (let userID of selectedGroup.users) {
+    //   const doc = await db.collection('users').doc(userID).get()
+    //   setMembers(members => [...members, {...doc.data(), uid: userID}])
+    // }
+    selectedGroup.users.forEach(async userID => {
+      const doc = await db.collection('users').doc(userID).get()
+      setMembers(members => [...members, {...doc.data(), uid: userID}])
+    })
+ }
 
   function handleClick(targetUid) {
     const groupName = selectedGroup.groupName
     if (isAdmin && !selectedGroup.shuffleStage) {
-      if (member) {
-        //borar usuario
-        // TODO: comprobar que no seas tú mismo
-        if (window.confirm('¿Eliminar a esta persona del grupo?')) {
-          // borrar su id de users
-          db.collection('groups').doc(groupName).update({
-            users: firebase.firestore.FieldValue.arrayRemove(targetUid),
-          })
-          // borrar el nombre de selectedGroup de groups del usuario
-          db.collection('users').doc(targetUid).update({
-            groups: firebase.firestore.FieldValue.arrayRemove(groupName),
-          })
-          dispatch(setSnackbar({show: true, severity: 'success', message: 'Usuario expulsado con éxito.'}))
-        }
-      } else {
-        // añadir su id a users y quitarlo de requests
+      //borar usuario
+      if (window.confirm('¿Eliminar a esta persona del grupo?')) {
+        // borrar su id de users
         db.collection('groups').doc(groupName).update({
-          users: firebase.firestore.FieldValue.arrayUnion(targetUid),
-          requests: firebase.firestore.FieldValue.arrayRemove(targetUid)
+          users: firebase.firestore.FieldValue.arrayRemove(targetUid),
         })
-        // añadir el nombre de selectedGroup a groups del usuario y borrarlo de requests
+        // borrar el nombre de selectedGroup de groups del usuario
         db.collection('users').doc(targetUid).update({
-          groups: firebase.firestore.FieldValue.arrayUnion(groupName),
-          requests: firebase.firestore.FieldValue.arrayRemove(groupName),
-          [`wishes.${groupName}`]: '¡Cualquier cosa!'
+          groups: firebase.firestore.FieldValue.arrayRemove(groupName),
         })
-        dispatch(setSnackbar({show: true, severity: 'success', message: 'Has añadido un nuevo miembro a tu grupo.'}))
+        dispatch(setSnackbar({show: true, severity: 'success', message: 'Usuario expulsado con éxito.'}))
       }
     }
   }
 
+  useEffect(() => {
+    // comprobamos que selectedGroup ya está cargado
+    if (Object.keys(selectedGroup).length > 0) {
+      getMembers()
+    }
+  }, [selectedGroup])
+
   return (
-    <div className={classes.root} key={member ? 'members' : 'requesters'}>
+    <div className={classes.root} key='members'>
       <List component="nav" aria-label="main mailbox folders">
-        { people.map(p => (
-            <>
-              <ListItem key={p.uid} > 
+        { members.map(p => (
+            <div key={p.uid}>
+              <ListItem > 
                 <ListItemIcon>
                   { selectedGroup.admin === p.uid 
                     ? (
@@ -81,8 +88,7 @@ export default function SimpleList({people, member, isAdmin}) {
                       </Tooltip>
                       )
                     : isAdmin && !selectedGroup.shuffleStage
-                      ? ( member 
-                        ? (
+                      ? (
                           <Tooltip 
                             placement="top" 
                             TransitionComponent={Zoom} 
@@ -92,20 +98,9 @@ export default function SimpleList({people, member, isAdmin}) {
                             <Icon onClick={() => handleClick(p.uid)} >person_remove_alt_1</Icon>
                           </Tooltip>
                         )
-                        : (
-                          <Tooltip 
-                            placement="top" 
-                            TransitionComponent={Zoom} 
-                            disableFocusListener 
-                            title="Incluir a esta persona en el grupo" 
-                            arrow>
-                            <Icon onClick={() => handleClick(p.uid)} >person_add_alt_1</Icon>
-                          </Tooltip>  
-                        )
-                      )
                       : (
                         <Icon onClick={handleClick} id={p.uid} >person</Icon>
-                      )
+                        )
                   }
                 </ListItemIcon>
                 <ListItemText primary={p.name} secondary={p.email} />
@@ -130,10 +125,9 @@ export default function SimpleList({people, member, isAdmin}) {
                     <Icon>done</Icon>
                   </Tooltip>
                 )}
-                
               </ListItem>
               <Divider />
-            </>
+            </div>
           )) 
         }
       </List>
