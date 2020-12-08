@@ -47,8 +47,8 @@ export default function GroupsList() {
     // hacemos una escucha a la db para que se actualice la lista al realizar cambios:
     db.collection('users').doc(user.uid).onSnapshot(doc => {
       dispatch(setUser({...doc.data(), uid: doc.id}))
-    })
-  }
+    })    
+}
 
   function getGroups() {
     setGroupNames([])
@@ -78,9 +78,13 @@ export default function GroupsList() {
       <SearchField />
       <div className={classes.list}>
         <h4>Grupos:</h4>
-        {search === '' && user !== null
-          ? user.groups.map(g => <GroupCard groupName={g} key={g} />)
-          : groupNames.map(g => <GroupCard groupName={g} key={g} />)
+        {user !== null && 
+          (
+            search === ''
+            ? user.groups.map(g => <GroupCard groupName={g} key={g} />)
+            : groupNames.map(g => <GroupCard groupName={g} key={g} />)
+          )
+          
         }
       </div>
       <NewGroupModal />
