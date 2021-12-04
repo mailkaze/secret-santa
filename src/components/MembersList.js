@@ -31,17 +31,21 @@ export default function MembersList({isAdmin}) {
   
   const dispatch = useDispatch()
 
-  function getMembers() {
+  async function getMembers() {
     // vaciamos la lista para que no se repitan
     setMembers([])
-    // for (let userID of selectedGroup.users) {
-    //   const doc = await db.collection('users').doc(userID).get()
-    //   setMembers(members => [...members, {...doc.data(), uid: userID}])
-    // }
-    selectedGroup.users.forEach(async userID => {
+    let tempMembers = []
+    for (let userID of selectedGroup.users) {
       const doc = await db.collection('users').doc(userID).get()
-      setMembers(members => [...members, {...doc.data(), uid: userID}])
-    })
+      // setMembers(members => [...members, {...doc.data(), uid: userID}])
+      tempMembers.push({...doc.data(), uid: userID})
+    }
+    // selectedGroup.users.forEach(async userID => {
+    //   const doc = await db.collection('users').doc(userID).get()
+    //   tempMembers.push({...doc.data(), uid: userID})
+    // })
+    console.log("traigo los miembros:", tempMembers)
+    setMembers(tempMembers)
  }
 
   function handleClick(targetUid) {
@@ -61,6 +65,9 @@ export default function MembersList({isAdmin}) {
       }
     }
   }
+  useEffect(() => {
+    console.log("members:", members)
+  }, [members])
 
   useEffect(() => {
     // comprobamos que selectedGroup ya está cargado

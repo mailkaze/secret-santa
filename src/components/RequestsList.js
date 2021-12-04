@@ -34,12 +34,13 @@ export default function RequestsList({isAdmin}) {
   async function getRequests() {
     // vaciamos la lista para que no se repitan
     setRequests([])
-
-   for (let userID of selectedGroup.requests) {
-     const doc = await db.collection('users').doc(userID).get()
-     setRequests(requests => [...requests, {...doc.data(), uid: userID}])
-   }
- }
+    let tempRequests = []
+    for (let userID of selectedGroup.requests) {
+      const doc = await db.collection('users').doc(userID).get()
+      tempRequests.push({...doc.data(), uid: userID}) 
+    }
+    setRequests(tempRequests)
+  }
 
   function handleClick(targetUid) {
     const groupName = selectedGroup.groupName
