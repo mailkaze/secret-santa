@@ -17,26 +17,6 @@ export function setUserRequests(groups) {
   return { type: 'SET_USER_REQUESTS', payload: groups }
 }
 
-export function setShowSignUp(showSignUp) {
-  return { type: 'SET_SHOW_SIGNUP', payload: showSignUp }
-}
-
-export function setShowLogin(showLogin) {
-  return { type: 'SET_SHOW_LOGIN', payload: showLogin }
-}
-
-export function openDashboard(groupId) {
-  return { type: 'OPEN_DASHBOARD', payload: groupId }
-}
-
-export function closeDashboard() {
-  return { type: 'CLOSE_DASHBOARD' }
-}
-
-export function setSelectedGroup(groupData) {
-  return { type: 'SET_SELECTED_GROUP', payload: groupData }
-}
-
 export function setSearch(search) {
   return { type: 'SET_SEARCH', payload: search }
 }
@@ -45,8 +25,12 @@ export function setSnackbar(snackbar) {
   return { type: 'SET_SNACKBAR', payload: snackbar }
 }
 
+let lastSnackbarId = 0
+
+// Cada aviso lleva su id: el snackbar se reinicia aunque el mensaje se repita
 export function notify(severity, message) {
-  return setSnackbar({ show: true, severity, message })
+  lastSnackbarId += 1
+  return setSnackbar({ id: lastSnackbarId, show: true, severity, message })
 }
 
 export function resetState() {
@@ -54,23 +38,37 @@ export function resetState() {
 }
 
 // El admin elimina el grupo; el resto de miembros lo abandona. Devuelve true si se ha completado.
-export function leaveOrDeleteGroup(group) {
+// confirm es la función de useConfirm: muestra un diálogo y resuelve true o false.
+export function leaveOrDeleteGroup(group, confirm) {
   return async (dispatch, getState) => {
     const { uid } = getState().user
+    const isAdmin = group.admin === uid
+    if (!isAdmin && group.shuffleStage) {
+      dispatch(notify('error', 'No puedes salir del grupo mientras dura el sorteo.'))
+      return false
+    }
+    const accepted = await confirm(isAdmin
+      ? {
+        title: `¿Eliminar el grupo «${group.name}»?`,
+        message: 'Nadie podrá volver a entrar y se borrarán el sorteo, los deseos y las valoraciones. Esta acción no se puede deshacer.',
+        confirmLabel: `Eliminar «${group.name}»`,
+        destructive: true,
+      }
+      : {
+        title: `¿Salir del grupo «${group.name}»?`,
+        message: 'Dejarás de ver el grupo y se borrará tu deseo. Si quieres volver, tendrás que pedir unirte otra vez.',
+        confirmLabel: `Salir de «${group.name}»`,
+        destructive: true,
+      })
+    if (!accepted) return false
     try {
-      if (group.admin === uid) {
-        if (!window.confirm('Si eliminas el grupo nadie podrá acceder a él y se borrarán todos los datos de regalos y sorteos, ¿deseas eliminar este grupo?')) return false
+      if (isAdmin) {
         await deleteGroup(group)
-        dispatch(notify('success', 'El grupo se ha eliminado con éxito.'))
-        return true
+        dispatch(notify('success', `Has eliminado el grupo «${group.name}».`))
+      } else {
+        await removeMember(group.id, uid)
+        dispatch(notify('info', `Has salido del grupo «${group.name}».`))
       }
-      if (group.shuffleStage) {
-        dispatch(notify('error', 'No se puede abandonar el grupo durante la fase de sorteo.'))
-        return false
-      }
-      if (!window.confirm('¿Abandonar este grupo?')) return false
-      await removeMember(group.id, uid)
-      dispatch(notify('info', 'Has abandonado este grupo.'))
       return true
     } catch {
       dispatch(notify('error', GENERIC_ERROR))

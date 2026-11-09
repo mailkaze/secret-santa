@@ -12,9 +12,17 @@ export default function AppSnackbar() {
     dispatch(setSnackbar({ ...snackbar, show: false }))
   }
 
+  // La key por aviso reinicia el temporizador aunque llegue el mismo mensaje dos veces
   return (
-    <Snackbar open={snackbar.show} autoHideDuration={6000} onClose={handleClose}>
-      <Alert onClose={handleClose} severity={snackbar.severity} elevation={6} variant="filled">
+    <Snackbar
+      key={snackbar.id}
+      open={snackbar.show}
+      autoHideDuration={6000}
+      onClose={handleClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      sx={{ bottom: { xs: 16 } }}
+    >
+      <Alert onClose={handleClose} severity={snackbar.severity} variant="filled" elevation={6} sx={{ width: '100%', maxWidth: 528 }}>
         {snackbar.message}
       </Alert>
     </Snackbar>

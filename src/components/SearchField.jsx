@@ -1,18 +1,24 @@
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
+import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import InputAdornment from '@mui/material/InputAdornment'
 import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
-import Icon from '@mui/material/Icon'
+import SearchIcon from '@mui/icons-material/Search'
 import { setSearch } from '../redux/actions'
-
-export function normalizeSearch(term) {
-  return term.trim().replace(/\s+/g, ' ').toLowerCase()
-}
+import { normalizeSearch } from '../utils'
 
 export default function SearchField() {
-  const [searchTerm, setSearchTerm] = useState('')
+  const search = useSelector(state => state.search)
+  const [searchTerm, setSearchTerm] = useState(search)
+  const [previousSearch, setPreviousSearch] = useState(search)
   const dispatch = useDispatch()
+
+  // Si la búsqueda se reinicia desde fuera (por ejemplo, al enviar una solicitud), la caja se vacía
+  if (search !== previousSearch) {
+    setPreviousSearch(search)
+    if (search === '') setSearchTerm('')
+  }
 
   function handleChange(e) {
     if (e.target.value === '') dispatch(setSearch(''))
@@ -25,29 +31,30 @@ export default function SearchField() {
   }
 
   return (
-    <form onSubmit={handleSearch} role="search">
+    <Box component="form" role="search" onSubmit={handleSearch} sx={{ mb: 3 }}>
       <TextField
-        variant="standard"
-        sx={{ display: 'block' }}
         id="search-groups"
-        placeholder="Buscar grupos"
+        placeholder="Busca un grupo"
         type="search"
         autoComplete="off"
         value={searchTerm}
         onChange={handleChange}
         slotProps={{
-          htmlInput: { 'aria-label': 'Buscar grupos' },
+          htmlInput: { 'aria-label': 'Buscar grupos', enterKeyHint: 'search' },
           input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'text.secondary' }} />
+              </InputAdornment>
+            ),
             endAdornment: (
               <InputAdornment position="end">
-                <Button variant="contained" color="primary" type="submit" aria-label="Buscar">
-                  <Icon>search</Icon>
-                </Button>
+                <Button type="submit" variant="contained" size="small">Buscar</Button>
               </InputAdornment>
             ),
           },
         }}
       />
-    </form>
+    </Box>
   )
 }

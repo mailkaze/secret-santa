@@ -1,27 +1,24 @@
-import { Fragment, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import Avatar from '@mui/material/Avatar'
+import Chip from '@mui/material/Chip'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
-import ListItemIcon from '@mui/material/ListItemIcon'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
 import ListItemText from '@mui/material/ListItemText'
-import Divider from '@mui/material/Divider'
-import Tooltip from '@mui/material/Tooltip'
-import Zoom from '@mui/material/Zoom'
-import Icon from '@mui/material/Icon'
-import IconButton from '@mui/material/IconButton'
+import Skeleton from '@mui/material/Skeleton'
+import Stack from '@mui/material/Stack'
+import Typography from '@mui/material/Typography'
 import { getUsers } from '../services'
 
-function TipIcon({ title, children }) {
-  return (
-    <Tooltip placement="top" slots={{ transition: Zoom }} disableFocusListener title={title} arrow>
-      <Icon aria-label={title}>{children}</Icon>
-    </Tooltip>
-  )
+function initial(name) {
+  return name?.trim()?.[0]?.toUpperCase() ?? '?'
 }
 
-// Lista de miembros o de solicitudes. "action" solo se muestra a quien puede ejecutarla.
-export default function UserList({ uids, label, adminUid, shufflers = [], receiverUid, action }) {
+// Lista de miembros o de solicitudes. renderAction solo se pasa a quien puede ejecutar la acción.
+export default function UserList({ uids, label, adminUid, shufflers = [], receiverUid, renderAction, emptyText }) {
   const key = uids.join(',')
-  const [users, setUsers] = useState([])
+  // null mientras se cargan los perfiles
+  const [users, setUsers] = useState(null)
 
   // Solo se vuelven a pedir los perfiles cuando cambia la lista de uids
   useEffect(() => {
@@ -31,32 +28,49 @@ export default function UserList({ uids, label, adminUid, shufflers = [], receiv
     return () => { active = false }
   }, [key])
 
+  if (users === null) {
+    return (
+      <Stack spacing={1} role="status" aria-label={`Cargando: ${label}`}>
+        {uids.slice(0, 3).map(uid => <Skeleton key={uid} variant="rounded" height={56} />)}
+      </Stack>
+    )
+  }
+
+  if (users.length === 0) {
+    return <Typography sx={{ color: 'text.secondary' }}>{emptyText}</Typography>
+  }
+
   return (
-    <List aria-label={label} sx={{ width: '90%', m: 'auto', maxWidth: 360, bgcolor: 'background.paper' }}>
-      {users.map(person => (
-        <Fragment key={person.uid}>
-          <ListItem>
-            <ListItemIcon>
-              {adminUid === person.uid
-                ? <TipIcon title="Administrador del grupo">admin_panel_settings</TipIcon>
-                : action
-                  ? (
-                    <Tooltip placement="top" slots={{ transition: Zoom }} disableFocusListener title={action.title} arrow>
-                      <IconButton edge="start" aria-label={`${action.title}: ${person.name}`} onClick={() => action.onClick(person)}>
-                        <Icon>{action.icon}</Icon>
-                      </IconButton>
-                    </Tooltip>
-                  )
-                  : <Icon>person</Icon>
-              }
-            </ListItemIcon>
-            <ListItemText primary={person.name} secondary={person.email} />
-            {receiverUid === person.uid && <TipIcon title="¡Tú le regalas a esta persona!">card_giftcard</TipIcon>}
-            {shufflers.includes(person.uid) && <TipIcon title="Esta persona ya sorteó">done</TipIcon>}
+    <List aria-label={label} disablePadding>
+      {users.map((person, i) => {
+        const statuses = []
+        if (adminUid === person.uid) statuses.push(<Chip key="admin" size="small" color="secondary" label="Administrador" />)
+        if (receiverUid === person.uid) statuses.push(<Chip key="receiver" size="small" color="primary" label="Le regalas tú" />)
+        if (shufflers.includes(person.uid)) statuses.push(<Chip key="shuffled" size="small" color="success" variant="outlined" label="Ya ha sorteado" />)
+        return (
+          <ListItem key={person.uid} divider={i < users.length - 1} disableGutters secondaryAction={renderAction?.(person)}>
+            <ListItemAvatar>
+              <Avatar aria-hidden="true" sx={{ bgcolor: adminUid === person.uid ? 'secondary.main' : 'secondary.light', fontWeight: 800 }}>
+                {initial(person.name)}
+              </Avatar>
+            </ListItemAvatar>
+            <ListItemText
+              primary={person.name}
+              secondary={(
+                <>
+                  <Typography component="span" variant="body2" sx={{ display: 'block', color: 'text.secondary', overflowWrap: 'anywhere' }}>
+                    {person.email}
+                  </Typography>
+                  {statuses.length > 0 && (
+                    <Stack component="span" direction="row" sx={{ gap: 0.75, flexWrap: 'wrap', mt: 0.5 }}>{statuses}</Stack>
+                  )}
+                </>
+              )}
+              slotProps={{ primary: { sx: { fontWeight: 700, overflowWrap: 'anywhere' } }, secondary: { component: 'div' } }}
+            />
           </ListItem>
-          <Divider />
-        </Fragment>
-      ))}
+        )
+      })}
     </List>
   )
 }

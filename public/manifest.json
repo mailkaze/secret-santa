@@ -1,15 +1,27 @@
 {
-  "short_name": "Kaze's Secret Santa",
-  "name": "App de intercambio de regalos para grupos",
+  "name": "Secret Santa",
+  "short_name": "Secret Santa",
+  "description": "Secret Santa: organiza el intercambio de regalos (amigo invisible) con tu familia o tus amigos.",
+  "lang": "es",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#d90429",
+  "background_color": "#edf2f4",
   "icons": [
     {
-      "src": "sombrero-de-santa.svg",
+      "src": "/sombrero-de-santa.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
-  ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  ]
 }

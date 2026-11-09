@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Rating from '@mui/material/Rating'
-import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Rating from '@mui/material/Rating'
+import Typography from '@mui/material/Typography'
+import RedeemIcon from '@mui/icons-material/Redeem'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
 import { getOwnRating, saveRating } from '../services'
 import { notify } from '../redux/actions'
 import { GENERIC_ERROR } from '../utils'
+import SectionCard from './SectionCard'
 
 export default function RateCard({ groupId, uid }) {
   // undefined mientras se carga, null si aún no ha valorado
   const [savedRating, setSavedRating] = useState(undefined)
-  const [rating, setRating] = useState(2.5)
+  // Sin valor por defecto: hay que elegir las estrellas antes de enviar
+  const [rating, setRating] = useState(null)
   const [showStars, setShowStars] = useState(false)
+  const [saving, setSaving] = useState(false)
   const dispatch = useDispatch()
   const hasRated = savedRating != null
 
@@ -34,41 +36,55 @@ export default function RateCard({ groupId, uid }) {
   if (savedRating === undefined) return null
 
   async function handleSubmitRating() {
+    if (rating === null || saving) return
+    setSaving(true)
     try {
       await saveRating(groupId, uid, rating)
       setSavedRating(rating)
-      dispatch(notify('info', 'Tu calificación se ha guardado.'))
+      dispatch(notify('success', 'Tu valoración se ha guardado.'))
     } catch {
       dispatch(notify('error', GENERIC_ERROR))
+    } finally {
+      setSaving(false)
     }
   }
 
   return (
-    <Card sx={{ minWidth: 275, m: '5px 5%' }}>
-      <CardContent sx={{ p: '16px' }}>
-        {!hasRated && !showStars && (
-          <Button variant="contained" color="primary" onClick={() => setShowStars(true)}>Ya recibí mi regalo</Button>
-        )}
-        {(showStars || hasRated) && (
-          <Box component="fieldset" sx={{ mb: 0, pb: 0, borderColor: 'transparent' }}>
-            <Typography component="legend">
+    <SectionCard id="rating-title" title="Tu regalo">
+      {!hasRated && !showStars
+        ? (
+          <>
+            <Typography sx={{ color: 'text.secondary', mb: 2 }}>
+              Cuando recibas tu regalo, cuéntanos qué te ha parecido.
+            </Typography>
+            <Button variant="contained" startIcon={<RedeemIcon />} onClick={() => setShowStars(true)}>
+              Ya he recibido mi regalo
+            </Button>
+          </>
+        )
+        : (
+          <Box component="fieldset" sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
+            <Typography component="legend" sx={{ color: 'text.secondary', mb: 1, p: 0 }}>
               {hasRated
-                ? 'Ésta es la calificación que has dado a tu regalo, puedes cambiarla si quieres.'
-                : 'Ahora puedes calificar el regalo que recibiste. Este dato es anónimo y los demás miembros no conocerán tu calificación.'}
+                ? 'Esta es la valoración que le has dado a tu regalo. Puedes cambiarla si quieres.'
+                : 'Valora el regalo que has recibido. Nadie verá tu nota: el grupo solo verá la media.'}
             </Typography>
             <Rating
               name="gift-rating"
               value={rating}
-              precision={0.5}
+              precision={1}
               size="large"
-              sx={{ mb: '8px' }}
-              onChange={(event, value) => value !== null && setRating(value)}
+              onChange={(event, value) => setRating(value)}
               emptyIcon={<StarBorderIcon fontSize="inherit" />}
+              sx={{ fontSize: '2.75rem', mb: 1.5 }}
             />
-            <Button variant="contained" color="primary" onClick={handleSubmitRating}>Enviar calificación</Button>
+            <Box>
+              <Button variant="contained" onClick={handleSubmitRating} disabled={rating === null || saving}>
+                Enviar valoración
+              </Button>
+            </Box>
           </Box>
         )}
-      </CardContent>
-    </Card>
+    </SectionCard>
   )
 }
