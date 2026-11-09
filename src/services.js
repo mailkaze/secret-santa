@@ -14,9 +14,12 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { createDerangement, DEFAULT_WISH, normalizeGroupName, toGroupList } from './utils'
+import { createDerangement, DEFAULT_WISH, normalizeGroupName, normalizeSearch, toGroupList } from './utils'
 
 export class GroupExistsError extends Error {}
+
+// El sorteo no se puede empezar en el estado actual del grupo
+export class ShuffleNotAllowedError extends Error {}
 
 const groupRef = (groupId) => doc(db, 'groups', groupId)
 const memberDoc = (groupId, subcollection, uid) => doc(db, 'groups', groupId, subcollection, uid)
@@ -64,8 +67,9 @@ export async function getGroup(groupId) {
 }
 
 export async function searchGroups(term) {
+  const normalizedTerm = normalizeSearch(term)
   const result = await getDocs(collection(db, 'groups'))
-  return toGroupList(result.docs).filter(group => group.name.toLowerCase().includes(term))
+  return toGroupList(result.docs).filter(group => normalizeSearch(group.name).includes(normalizedTerm))
 }
 
 export async function createGroup(rawName, uid) {
@@ -109,33 +113,50 @@ export function removeMember(groupId, uid) {
   return batch.commit()
 }
 
-export function deleteGroup(group) {
-  const batch = writeBatch(db)
-  group.users.forEach(uid => {
-    MEMBER_SUBCOLLECTIONS.forEach(subcollection => batch.delete(memberDoc(group.id, subcollection, uid)))
+// Las operaciones de grupo completo leen el grupo dentro de la transacción y usan sus miembros
+// actuales, no los que tenía la pantalla al pulsar el botón.
+async function readGroup(transaction, groupId) {
+  const snapshot = await transaction.get(groupRef(groupId))
+  if (!snapshot.exists()) throw new Error('El grupo no existe.')
+  return snapshot.data()
+}
+
+function deleteMemberDocs(transaction, groupId, uids) {
+  uids.forEach(uid => {
+    MEMBER_SUBCOLLECTIONS.forEach(subcollection => transaction.delete(memberDoc(groupId, subcollection, uid)))
   })
-  batch.delete(doc(db, 'groupNames', group.nameId))
-  batch.delete(groupRef(group.id))
-  return batch.commit()
+}
+
+export function deleteGroup(group) {
+  return runTransaction(db, async transaction => {
+    const current = await readGroup(transaction, group.id)
+    deleteMemberDocs(transaction, group.id, current.users)
+    transaction.delete(doc(db, 'groupNames', current.nameId))
+    transaction.delete(groupRef(group.id))
+  })
 }
 
 export function startShuffleStage(group) {
-  const receivers = createDerangement(group.users)
-  const batch = writeBatch(db)
-  group.users.forEach((giver, i) => {
-    batch.set(memberDoc(group.id, 'assignments', giver), { receiver: receivers[i] })
+  return runTransaction(db, async transaction => {
+    const current = await readGroup(transaction, group.id)
+    if (current.shuffleStage) throw new ShuffleNotAllowedError('El sorteo ya ha empezado.')
+    if (current.users.length < 2) {
+      throw new ShuffleNotAllowedError('Hacen falta al menos dos miembros para hacer el sorteo.')
+    }
+    const receivers = createDerangement(current.users)
+    current.users.forEach((giver, i) => {
+      transaction.set(memberDoc(group.id, 'assignments', giver), { receiver: receivers[i] })
+    })
+    transaction.update(groupRef(group.id), { shuffleStage: true, shufflers: [], ratingSum: 0, ratingCount: 0 })
   })
-  batch.update(groupRef(group.id), { shuffleStage: true, shufflers: [], ratingSum: 0, ratingCount: 0 })
-  return batch.commit()
 }
 
 export function resetShuffle(group) {
-  const batch = writeBatch(db)
-  group.users.forEach(uid => {
-    MEMBER_SUBCOLLECTIONS.forEach(subcollection => batch.delete(memberDoc(group.id, subcollection, uid)))
+  return runTransaction(db, async transaction => {
+    const current = await readGroup(transaction, group.id)
+    deleteMemberDocs(transaction, group.id, current.users)
+    transaction.update(groupRef(group.id), { shuffleStage: false, shufflers: [], ratingSum: 0, ratingCount: 0 })
   })
-  batch.update(groupRef(group.id), { shuffleStage: false, shufflers: [], ratingSum: 0, ratingCount: 0 })
-  return batch.commit()
 }
 
 export function markAsShuffled(groupId, uid) {

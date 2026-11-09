@@ -17,19 +17,30 @@ export function createDerangement(items, random = Math.random) {
   }
 }
 
+const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g
+
 // El nombre visible conserva mayúsculas; el id de reserva hace que "Familia" y " familia " coincidan.
-// El id es el UTF-8 en hexadecimal: siempre es un id de documento válido, sea cual sea el nombre.
+// El id es el UTF-8 en hexadecimal del nombre en minúsculas: siempre es un id de documento válido
+// y firestore.rules lo recalcula con name.lower().toUtf8().toHexString().lower().
 export function normalizeGroupName(rawName) {
-  const name = rawName.trim().replace(/\s+/g, ' ')
-  const bytes = new TextEncoder().encode(name.normalize('NFC').toLowerCase())
+  const name = rawName.normalize('NFC').replace(ZERO_WIDTH, '').trim().replace(/\s+/g, ' ')
+  const bytes = new TextEncoder().encode(name.toLowerCase())
   const nameId = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')
   return { name, nameId }
+}
+
+// Búsqueda insensible a mayúsculas, espacios repetidos y tildes
+export function normalizeSearch(term) {
+  return term.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, ' ').toLowerCase()
 }
 
 // Los grupos creados por la versión antigua no tienen "name" y se ignoran
 export function toGroupList(docs) {
   return docs
-    .map(d => ({ id: d.id, name: d.data().name }))
+    .map(d => {
+      const { name, admin, shuffleStage } = d.data()
+      return { id: d.id, name, admin, shuffleStage }
+    })
     .filter(group => typeof group.name === 'string')
     .sort((a, b) => a.name.localeCompare(b.name, 'es'))
 }
@@ -41,15 +52,27 @@ export function validateGroupName(rawName) {
   return null
 }
 
+// Un único mensaje para los errores de credenciales: no revela si el email tiene cuenta
+const WRONG_CREDENTIALS = 'El email o la contraseña no son correctos.'
+
 const AUTH_ERRORS = {
-  'auth/user-not-found': 'Este email no tiene una cuenta en esta app, ¡Regístrate!',
-  'auth/wrong-password': 'La contraseña no es correcta.',
-  'auth/invalid-credential': 'El email o la contraseña no son correctos.',
-  'auth/network-request-failed': 'No se ha podido conectar con el sistema, comprueba tu conexión a Internet.',
+  'auth/user-not-found': WRONG_CREDENTIALS,
+  'auth/wrong-password': WRONG_CREDENTIALS,
+  'auth/invalid-credential': WRONG_CREDENTIALS,
+  'auth/invalid-login-credentials': WRONG_CREDENTIALS,
   'auth/invalid-email': 'Dirección de email no válida.',
+  'auth/missing-email': 'Escribe tu email.',
+  'auth/missing-password': 'Escribe tu contraseña.',
   'auth/email-already-in-use': 'Ya existe una cuenta con este email.',
+  'auth/weak-password': 'La contraseña es demasiado débil, usa al menos 8 caracteres.',
+  'auth/password-does-not-meet-requirements': 'La contraseña no cumple los requisitos de seguridad, prueba con una más larga que combine letras y números.',
+  'auth/too-many-requests': 'Has hecho demasiados intentos seguidos, espera unos minutos y vuelve a intentarlo.',
+  'auth/user-disabled': 'Esta cuenta está desactivada.',
+  'auth/network-request-failed': 'No se ha podido conectar con el sistema, comprueba tu conexión a Internet.',
 }
 
+export const AUTH_GENERIC_ERROR = 'No se ha podido completar la operación. Inténtalo de nuevo más tarde.'
+
 export function authErrorMessage(error) {
-  return AUTH_ERRORS[error.code] ?? `Error: ${error.message} Código del error: ${error.code}`
+  return AUTH_ERRORS[error?.code] ?? AUTH_GENERIC_ERROR
 }

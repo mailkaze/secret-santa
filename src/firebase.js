@@ -1,6 +1,12 @@
 import { initializeApp } from 'firebase/app'
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check'
 import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import {
+  browserLocalPersistence,
+  browserSessionPersistence,
+  indexedDBLocalPersistence,
+  initializeAuth,
+} from 'firebase/auth'
 
 // La configuración web de Firebase es pública por diseño; la seguridad la dan firestore.rules
 const firebaseConfig = {
@@ -14,5 +20,19 @@ const firebaseConfig = {
 }
 
 const app = initializeApp(firebaseConfig)
+
+// App Check es opcional: solo se activa si el build tiene la clave de reCAPTCHA Enterprise
+const recaptchaSiteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY
+if (recaptchaSiteKey) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey),
+    isTokenAutoRefreshEnabled: true,
+  })
+}
+
 export const db = getFirestore(app)
-export const auth = getAuth(app)
+// Solo email y contraseña: sin el resolutor de popup/redirect no se cargan el iframe de authDomain
+// ni apis.google.com, y la CSP de firebase.json no necesita permitirlos.
+export const auth = initializeAuth(app, {
+  persistence: [indexedDBLocalPersistence, browserLocalPersistence, browserSessionPersistence],
+})

@@ -36,6 +36,22 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys();
     }
 
+    function noDuplicates(list) {
+      return list.size() == list.toSet().size();
+    }
+
+    // arrayUnion(uid): se añade al final, o no cambia nada si ya estaba.
+    function appendsOnly(before, after, uid) {
+      return (uid in before && after == before)
+        || (!(uid in before) && after == before.concat([uid]));
+    }
+
+    // arrayRemove(uid): se quita exactamente ese uid, o no cambia nada si no estaba.
+    function removesOnly(before, after, uid) {
+      return (!(uid in before) && after == before)
+        || (after == before.removeAll([uid]) && after.size() == before.size() - 1);
+    }
+
     // El agregado del grupo debe reflejar exactamente la valoración escrita en la misma transacción.
     function ratingAggregateMatches(before, after, hadRating, previousValue, newValue) {
       return after.get('ratingSum', 0) == before.get('ratingSum', 0) + newValue - previousValue
@@ -75,6 +91,25 @@ service cloud.firestore {
     }
 
     match /groups/{groupId} {
+      // Listas sin repetidos y con límite de tamaño, también para el administrador.
+      function validLists(data) {
+        return data.users is list && data.requests is list && data.shufflers is list
+          && data.users.size() <= 50
+          && data.requests.size() <= 100
+          && noDuplicates(data.users)
+          && noDuplicates(data.requests)
+          && noDuplicates(data.shufflers);
+      }
+
+      // El id de reserva es el UTF-8 en hexadecimal del nombre en minúsculas (normalizeGroupName).
+      // Solo se comprueba el formato: lower() de las reglas solo pasa a minúsculas A-Z, así que
+      // recalcularlo rechazaría nombres como «Ñandú» o «ÁRBOL».
+      function validNameId(nameId) {
+        return nameId is string
+          && nameId.size() <= 1200
+          && nameId.matches('^([0-9a-f]{2})+$');
+      }
+
       // El administrador puede cambiarlo todo salvo el administrador y el nombre.
       function adminUpdate() {
         return resource.data.admin == request.auth.uid
@@ -86,16 +121,14 @@ service cloud.firestore {
         let uid = request.auth.uid;
         return changedKeys().hasOnly(['requests'])
           && !(uid in resource.data.users)
-          && request.resource.data.requests.toSet()
-            == resource.data.requests.toSet().union([uid].toSet());
+          && appendsOnly(resource.data.requests, request.resource.data.requests, uid);
       }
 
       // O4: el usuario retira su propia solicitud.
       function cancelsRequest() {
         let uid = request.auth.uid;
         return changedKeys().hasOnly(['requests'])
-          && request.resource.data.requests.toSet()
-            == resource.data.requests.toSet().difference([uid].toSet());
+          && removesOnly(resource.data.requests, request.resource.data.requests, uid);
       }
 
       // O6: un miembro que no es administrador abandona el grupo fuera del sorteo.
@@ -105,8 +138,7 @@ service cloud.firestore {
           && uid in resource.data.users
           && uid != resource.data.admin
           && resource.data.shuffleStage == false
-          && request.resource.data.users.toSet()
-            == resource.data.users.toSet().difference([uid].toSet());
+          && removesOnly(resource.data.users, request.resource.data.users, uid);
       }
 
       // O11: un miembro se marca como que ya ha visto a quién regala.
@@ -115,8 +147,7 @@ service cloud.firestore {
         return changedKeys().hasOnly(['shufflers'])
           && uid in resource.data.users
           && resource.data.shuffleStage == true
-          && request.resource.data.shufflers.toSet()
-            == resource.data.shufflers.toSet().union([uid].toSet());
+          && appendsOnly(resource.data.shufflers, request.resource.data.shufflers, uid);
       }
 
       // O13: un miembro actualiza el agregado junto con su propia valoración.
@@ -143,7 +174,7 @@ service cloud.firestore {
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 100
-        && request.resource.data.nameId is string
+        && validNameId(request.resource.data.nameId)
         && request.resource.data.admin == request.auth.uid
         && request.resource.data.users == [request.auth.uid]
         && request.resource.data.requests == []
@@ -151,7 +182,7 @@ service cloud.firestore {
         && request.resource.data.shuffleStage == false
         && request.resource.data.created is number
         && createdWithReservation();
-      allow update: if isSignedIn() && (
+      allow update: if isSignedIn() && validLists(request.resource.data) && (
         adminUpdate()
         || sendsRequest()
         || cancelsRequest()
