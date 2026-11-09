@@ -13,8 +13,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:rules": "firebase emulators:exec --only firestore --project demo-secret-santa \"vitest run --config tests/rules/vitest.config.js\"",
-    "cleanup:legacy": "node scripts/cleanup-legacy-data.mjs"
+    "test:rules": "firebase emulators:exec --only firestore --project demo-secret-santa \"vitest run --config tests/rules/vitest.config.js\""
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -38,7 +37,6 @@
     "@vitejs/plugin-react": "^6.2.1",
     "eslint": "^10.14.0",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "firebase-admin": "^14.5.0",
     "globals": "^17.14.0",
     "jsdom": "^31.0.0",
     "vite": "^8.3.6",

@@ -20,7 +20,6 @@ Built with React 19, Material UI 9, Redux Toolkit, Firebase 13 (Auth + Firestore
 | `npm test` | Unit and component tests (Vitest + Testing Library) |
 | `npm run lint` | ESLint, including the React hooks rules |
 | `npm run test:rules` | Drives the real `src/services.js` functions against the Firestore emulator to test the security rules (needs Java 21 and `firebase-tools`) |
-| `npm run cleanup:legacy` | Lists the data left by versions before 1.1.0; add `-- --apply` to delete it (see below) |
 
 CI (`.github/workflows/ci.yml`) runs lint, unit tests, the build and the rules tests on every push to `master` and every pull request.
 
@@ -71,21 +70,8 @@ These settings live in the console, not in the repository:
 3. **App Check**: register the web app with reCAPTCHA Enterprise, build with `VITE_RECAPTCHA_SITE_KEY`, watch the metrics and then enforce App Check for Cloud Firestore and Authentication.
 4. **Google Cloud console → Billing → Budgets & alerts**: create a budget with email alerts for the project.
 
-### Legacy data cleanup
-
-Versions before 1.1.0 stored groups without a `name` field and kept `wishes`, `ratings`, `groups` and `requests` inside `users` documents. The app ignores them; `scripts/cleanup-legacy-data.mjs` removes them with the Admin SDK on the project in `.firebaserc`:
-
-```bash
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-npm run cleanup:legacy              # dry run: prints what would change
-npm run cleanup:legacy -- --apply   # deletes those groups (with their subcollections) and fields
-```
-
-With `FIRESTORE_EMULATOR_HOST` set it runs against the emulator instead.
-
 ## Known limitations
 
 - The draw is computed in the admin's browser, so a technical admin could inspect it while it is generated. Hiding it completely requires a Cloud Function.
 - Group search downloads every group name; fine for a small app, not for thousands of groups.
 - The server does not verify that `nameId` matches `name` (the rules `lower()` only handles A–Z), so a modified client could reserve a name under a different id.
-- Groups created by versions before 1.1.0 (no `name` field) are ignored by the app and cannot be deleted from it; remove them with `npm run cleanup:legacy`.
