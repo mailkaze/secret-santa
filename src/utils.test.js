@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { authErrorMessage, createDerangement, normalizeGroupName, validateGroupName } from './utils'
+import { authErrorMessage, createDerangement, normalizeGroupName, toGroupList, validateGroupName } from './utils'
+
+describe('toGroupList', () => {
+  const snapshot = (id, data) => ({ id, data: () => data })
+
+  it('ignores documents from the old app that have no name and sorts the rest by name', () => {
+    const docs = [
+      snapshot('Familia antigua', { admin: 'ana', users: ['ana'] }),
+      snapshot('g2', { name: 'Zapatos', users: ['ana'] }),
+      snapshot('g1', { name: 'Amigos', users: ['ana'] }),
+    ]
+    expect(toGroupList(docs)).toEqual([{ id: 'g1', name: 'Amigos' }, { id: 'g2', name: 'Zapatos' }])
+  })
+})
 
 describe('createDerangement', () => {
   const uids = ['ana', 'bea', 'carlos', 'dani']

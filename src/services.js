@@ -14,7 +14,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { createDerangement, DEFAULT_WISH, normalizeGroupName } from './utils'
+import { createDerangement, DEFAULT_WISH, normalizeGroupName, toGroupList } from './utils'
 
 export class GroupExistsError extends Error {}
 
@@ -22,7 +22,6 @@ const groupRef = (groupId) => doc(db, 'groups', groupId)
 const memberDoc = (groupId, subcollection, uid) => doc(db, 'groups', groupId, subcollection, uid)
 const MEMBER_SUBCOLLECTIONS = ['assignments', 'wishes', 'ratings']
 
-const byName = (a, b) => a.name.localeCompare(b.name, 'es')
 const ignoreError = () => {}
 
 export function createUserProfile(uid, name, email) {
@@ -44,9 +43,7 @@ export function subscribeToUser(uid, onChange) {
 // field: 'users' para los grupos del usuario, 'requests' para sus solicitudes pendientes
 export function subscribeToUserGroups(uid, field, onChange) {
   const groupsQuery = query(collection(db, 'groups'), where(field, 'array-contains', uid))
-  return onSnapshot(groupsQuery, result => {
-    onChange(result.docs.map(d => ({ id: d.id, name: d.data().name })).sort(byName))
-  }, ignoreError)
+  return onSnapshot(groupsQuery, result => onChange(toGroupList(result.docs)), ignoreError)
 }
 
 export function subscribeToGroup(groupId, onChange) {
@@ -68,10 +65,7 @@ export async function getGroup(groupId) {
 
 export async function searchGroups(term) {
   const result = await getDocs(collection(db, 'groups'))
-  return result.docs
-    .map(d => ({ id: d.id, name: d.data().name }))
-    .filter(group => group.name.toLowerCase().includes(term))
-    .sort(byName)
+  return toGroupList(result.docs).filter(group => group.name.toLowerCase().includes(term))
 }
 
 export async function createGroup(rawName, uid) {

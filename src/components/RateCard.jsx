@@ -12,21 +12,26 @@ import { notify } from '../redux/actions'
 import { GENERIC_ERROR } from '../utils'
 
 export default function RateCard({ groupId, uid }) {
-  const [savedRating, setSavedRating] = useState(null)
+  // undefined mientras se carga, null si aún no ha valorado
+  const [savedRating, setSavedRating] = useState(undefined)
   const [rating, setRating] = useState(2.5)
   const [showStars, setShowStars] = useState(false)
   const dispatch = useDispatch()
-  const hasRated = savedRating !== null
+  const hasRated = savedRating != null
 
   useEffect(() => {
     let active = true
-    getOwnRating(groupId, uid).then(value => {
-      if (!active || value === null) return
-      setSavedRating(value)
-      setRating(value)
-    })
+    getOwnRating(groupId, uid)
+      .then(value => {
+        if (!active) return
+        setSavedRating(value)
+        if (value !== null) setRating(value)
+      })
+      .catch(() => active && setSavedRating(null))
     return () => { active = false }
   }, [groupId, uid])
+
+  if (savedRating === undefined) return null
 
   async function handleSubmitRating() {
     try {

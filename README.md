@@ -47,3 +47,4 @@ Run `npm run test:rules` before deploying rule changes.
 
 - The draw is computed in the admin's browser, so a technical admin could inspect it while it is generated. Hiding it completely requires a Cloud Function.
 - Group search downloads every group name; fine for a small app, not for thousands of groups.
+- Groups created by versions before 1.1.0 (no `name` field) are ignored by the app and cannot be deleted from it; remove them from the Firebase console if you want them gone.

@@ -26,7 +26,8 @@ export default function UserList({ uids, label, adminUid, shufflers = [], receiv
   // Solo se vuelven a pedir los perfiles cuando cambia la lista de uids
   useEffect(() => {
     let active = true
-    getUsers(key ? key.split(',') : []).then(result => active && setUsers(result))
+    // Si falla, se mantiene la última lista conocida
+    getUsers(key ? key.split(',') : []).then(result => active && setUsers(result)).catch(() => {})
     return () => { active = false }
   }, [key])
 

@@ -26,6 +26,14 @@ export function normalizeGroupName(rawName) {
   return { name, nameId }
 }
 
+// Los grupos creados por la versión antigua no tienen "name" y se ignoran
+export function toGroupList(docs) {
+  return docs
+    .map(d => ({ id: d.id, name: d.data().name }))
+    .filter(group => typeof group.name === 'string')
+    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
+}
+
 export function validateGroupName(rawName) {
   const { name } = normalizeGroupName(rawName)
   if (!name) return 'Escribe un nombre para el grupo.'

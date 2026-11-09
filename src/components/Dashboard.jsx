@@ -126,12 +126,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (!hasShuffled) return
     let active = true
-    getReceiver(groupId, uid).then(data => active && setReceiver(data))
+    getReceiver(groupId, uid)
+      .then(data => active && setReceiver(data))
+      .catch(() => active && dispatch(notify('error', GENERIC_ERROR)))
     return () => {
       active = false
       setReceiver(null)
     }
-  }, [hasShuffled, groupId, uid])
+  }, [hasShuffled, groupId, uid, dispatch])
 
   async function run(operation, successSeverity, successMessage) {
     try {
