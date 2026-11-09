@@ -7,13 +7,20 @@ export default [
   js.configs.recommended,
   reactHooks.configs.flat.recommended,
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['**/*.{js,jsx,mjs}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, ...globals.node },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
+  },
+  {
+    files: ['src/**/*.{js,jsx}'],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    files: ['*.{js,mjs}', 'scripts/**/*.{js,mjs}', 'tests/**/*.{js,mjs}'],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ['**/*.test.{js,jsx}', 'src/setupTests.js'],
