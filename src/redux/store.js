@@ -1,19 +1,8 @@
-import { createStore } from 'redux'
-import reducer from './reducers'
+import { configureStore } from '@reduxjs/toolkit'
+import reducer, { initialState } from './reducers'
 
-const initialState = {
-  user: null,
-  selectedGroup: {},
-  search: '',
-  showSignUp: false,
-  showLogin: false,
-  showDashboard: false,
-  snackbar: {
-    show: false,
-    severity: 'info',
-    message: 'default message'
-  },
-  
+export function createAppStore(preloadedState = initialState) {
+  return configureStore({ reducer, preloadedState })
 }
 
-export default createStore(reducer, initialState)
+export default createAppStore()
