@@ -17,6 +17,16 @@ export const CORNER_STARS = [
   { top: '24%', left: '90%', size: 14, delay: '1.6s' },
 ]
 
+// Para el cielo nocturno del sorteo: esquinas superiores y laterales, alrededor del regalo
+export const NIGHT_STARS = [
+  { top: '3%', left: '5%', size: 18 },
+  { top: '5%', left: '85%', size: 26, delay: '0.8s' },
+  { top: '27%', left: '5%', size: 12, delay: '1.4s' },
+  { top: '24%', left: '89%', size: 14, delay: '1.6s' },
+  { top: '44%', left: '88%', size: 10, delay: '2.2s' },
+  { top: '49%', left: '7%', size: 14, delay: '0.4s' },
+]
+
 // Para la cabecera del grupo: abajo a la derecha, donde no hay botones ni texto
 export const HEADER_STARS = [
   { top: '70%', left: '88%', size: 24 },

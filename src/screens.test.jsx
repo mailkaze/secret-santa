@@ -390,7 +390,7 @@ describe('dashboard', () => {
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByRole('status')).toHaveTextContent('Te toca regalar a Nombre bea.')
     expect(screen.queryByRole('heading', { name: 'Nombre bea', hidden: true })).not.toBeInTheDocument()
-    await user.click(within(dialog).getByRole('button', { name: 'Cerrar' }))
+    await user.click(within(dialog).getByRole('button', { name: '¡Genial!' }))
     expect(await screen.findByRole('heading', { name: 'Nombre bea' })).toBeInTheDocument()
   })
 
