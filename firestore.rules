@@ -1,8 +1,213 @@
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true;
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function groupPath(groupId) {
+      return /databases/$(database)/documents/groups/$(groupId);
+    }
+
+    function groupNamePath(nameId) {
+      return /databases/$(database)/documents/groupNames/$(nameId);
+    }
+
+    // get() devuelve el estado previo a la petición (en un lote, previo a todo el lote).
+    function isGroupAdmin(groupId) {
+      return isSignedIn() && get(groupPath(groupId)).data.admin == request.auth.uid;
+    }
+
+    function isGroupMember(groupId) {
+      return isSignedIn() && request.auth.uid in get(groupPath(groupId)).data.users;
+    }
+
+    function hasExactly(data, fields) {
+      return data.keys().hasOnly(fields) && data.keys().hasAll(fields);
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // El agregado del grupo debe reflejar exactamente la valoración escrita en la misma transacción.
+    function ratingAggregateMatches(before, after, hadRating, previousValue, newValue) {
+      return after.get('ratingSum', 0) == before.get('ratingSum', 0) + newValue - previousValue
+        && after.get('ratingCount', 0) == before.get('ratingCount', 0) + (hadRating ? 0 : 1);
+    }
+
+    match /users/{userId} {
+      function validName(name) {
+        return name is string && name.size() > 0 && name.size() <= 100;
+      }
+
+      allow get: if isSignedIn();
+      allow create: if isOwner(userId)
+        && hasExactly(request.resource.data, ['name', 'email'])
+        && validName(request.resource.data.name)
+        && request.resource.data.email == request.auth.token.email;
+      allow update: if isOwner(userId)
+        && changedKeys().hasOnly(['name'])
+        && validName(request.resource.data.name);
+    }
+
+    // Reserva de nombre: garantiza que no haya dos grupos con el mismo nombre normalizado.
+    match /groupNames/{nameId} {
+      function reservesOwnGroup() {
+        let group = getAfter(groupPath(request.resource.data.groupId)).data;
+        return group.admin == request.auth.uid && group.nameId == nameId;
+      }
+
+      allow get: if isSignedIn();
+      allow create: if isSignedIn()
+        && hasExactly(request.resource.data, ['groupId'])
+        && request.resource.data.groupId is string
+        && reservesOwnGroup();
+      // Solo se libera junto con el borrado del grupo (O8).
+      allow delete: if isGroupAdmin(resource.data.groupId)
+        && !existsAfter(groupPath(resource.data.groupId));
+    }
+
+    match /groups/{groupId} {
+      // El administrador puede cambiarlo todo salvo el administrador y el nombre.
+      function adminUpdate() {
+        return resource.data.admin == request.auth.uid
+          && !changedKeys().hasAny(['admin', 'name', 'nameId']);
+      }
+
+      // O3: un no miembro se añade a las solicitudes.
+      function sendsRequest() {
+        let uid = request.auth.uid;
+        return changedKeys().hasOnly(['requests'])
+          && !(uid in resource.data.users)
+          && request.resource.data.requests.toSet()
+            == resource.data.requests.toSet().union([uid].toSet());
+      }
+
+      // O4: el usuario retira su propia solicitud.
+      function cancelsRequest() {
+        let uid = request.auth.uid;
+        return changedKeys().hasOnly(['requests'])
+          && request.resource.data.requests.toSet()
+            == resource.data.requests.toSet().difference([uid].toSet());
+      }
+
+      // O6: un miembro que no es administrador abandona el grupo fuera del sorteo.
+      function leavesGroup() {
+        let uid = request.auth.uid;
+        return changedKeys().hasOnly(['users'])
+          && uid in resource.data.users
+          && uid != resource.data.admin
+          && resource.data.shuffleStage == false
+          && request.resource.data.users.toSet()
+            == resource.data.users.toSet().difference([uid].toSet());
+      }
+
+      // O11: un miembro se marca como que ya ha visto a quién regala.
+      function revealsReceiver() {
+        let uid = request.auth.uid;
+        return changedKeys().hasOnly(['shufflers'])
+          && uid in resource.data.users
+          && resource.data.shuffleStage == true
+          && request.resource.data.shufflers.toSet()
+            == resource.data.shufflers.toSet().union([uid].toSet());
+      }
+
+      // O13: un miembro actualiza el agregado junto con su propia valoración.
+      function ratesGroup() {
+        let ratingPath = /databases/$(database)/documents/groups/$(groupId)/ratings/$(request.auth.uid);
+        let hadRating = exists(ratingPath);
+        return changedKeys().hasOnly(['ratingSum', 'ratingCount'])
+          && request.auth.uid in resource.data.users
+          && resource.data.shuffleStage == true
+          && ratingAggregateMatches(resource.data, request.resource.data, hadRating,
+            hadRating ? get(ratingPath).data.value : 0, getAfter(ratingPath).data.value);
+      }
+
+      // O2: el grupo solo se crea junto con su reserva de nombre apuntando a él.
+      function createdWithReservation() {
+        let reservation = groupNamePath(request.resource.data.nameId);
+        return existsAfter(reservation) && getAfter(reservation).data.groupId == groupId;
+      }
+
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn()
+        && hasExactly(request.resource.data,
+          ['name', 'nameId', 'admin', 'users', 'requests', 'created', 'shuffleStage', 'shufflers'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 100
+        && request.resource.data.nameId is string
+        && request.resource.data.admin == request.auth.uid
+        && request.resource.data.users == [request.auth.uid]
+        && request.resource.data.requests == []
+        && request.resource.data.shufflers == []
+        && request.resource.data.shuffleStage == false
+        && request.resource.data.created is number
+        && createdWithReservation();
+      allow update: if isSignedIn() && (
+        adminUpdate()
+        || sendsRequest()
+        || cancelsRequest()
+        || leavesGroup()
+        || revealsReceiver()
+        || ratesGroup()
+      );
+      // O8: la reserva de nombre se borra en el mismo lote.
+      allow delete: if isSignedIn()
+        && resource.data.admin == request.auth.uid
+        && !existsAfter(groupNamePath(resource.data.nameId));
+
+      match /assignments/{giverId} {
+        allow get: if isOwner(giverId);
+        allow create, update: if isGroupAdmin(groupId)
+          && hasExactly(request.resource.data, ['receiver'])
+          && request.resource.data.receiver is string;
+        allow delete: if isGroupAdmin(groupId);
+      }
+
+      match /wishes/{memberId} {
+        function validWish() {
+          return hasExactly(request.resource.data, ['text'])
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 500;
+        }
+
+        allow read: if isGroupMember(groupId);
+        allow create, update: if validWish()
+          && ((isOwner(memberId) && isGroupMember(groupId)) || isGroupAdmin(groupId));
+        allow delete: if isOwner(memberId) || isGroupAdmin(groupId);
+      }
+
+      match /ratings/{memberId} {
+        function validRating() {
+          return hasExactly(request.resource.data, ['value'])
+            && request.resource.data.value is number
+            && request.resource.data.value >= 0.5
+            && request.resource.data.value <= 5;
+        }
+
+        // La valoración solo se acepta si el agregado del grupo se actualiza en la misma transacción.
+        function matchesGroupAggregate() {
+          let before = get(groupPath(groupId)).data;
+          let hadRating = resource != null;
+          return request.auth.uid in before.users
+            && before.shuffleStage == true
+            && ratingAggregateMatches(before, getAfter(groupPath(groupId)).data, hadRating,
+              hadRating ? resource.data.value : 0, request.resource.data.value);
+        }
+
+        allow get: if isOwner(memberId);
+        allow create, update: if isOwner(memberId) && validRating() && matchesGroupAggregate();
+        allow delete: if isGroupAdmin(groupId);
+      }
     }
   }
 }
