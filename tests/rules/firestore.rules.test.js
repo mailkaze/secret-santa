@@ -323,7 +323,7 @@ describe('allowed operations through src/services.js', () => {
 
   it('O10 refuses to start a draw that is already running, without writing anything', async () => {
     signIn('alice');
-    await expect(services.startShuffleStage({ ...REYES, shuffleStage: false })).rejects.toThrow();
+    await expect(services.startShuffleStage({ ...REYES, shuffleStage: false })).rejects.toThrow(services.ShuffleNotAllowedError);
     expect(await readUnchecked(`groups/${REYES.id}`)).toMatchObject({ shufflers: ['carol'], ratingSum: 4 });
     expect(await readUnchecked(`groups/${REYES.id}/assignments/alice`)).toEqual({ receiver: 'bob' });
   });
@@ -331,7 +331,7 @@ describe('allowed operations through src/services.js', () => {
   it('O10 refuses to start a draw with fewer than two members', async () => {
     signIn('dave');
     const groupId = await services.createGroup('Solo yo', 'dave');
-    await expect(services.startShuffleStage({ id: groupId, users: ['dave', 'erin'] })).rejects.toThrow();
+    await expect(services.startShuffleStage({ id: groupId, users: ['dave', 'erin'] })).rejects.toThrow(services.ShuffleNotAllowedError);
     expect((await readUnchecked(`groups/${groupId}`)).shuffleStage).toBe(false);
     expect(await readUnchecked(`groups/${groupId}/assignments/dave`)).toBeUndefined();
   });
