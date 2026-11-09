@@ -20,8 +20,8 @@ export function createDerangement(items, random = Math.random) {
 const ZERO_WIDTH = /[\u200B-\u200D\u2060\uFEFF]/g
 
 // El nombre visible conserva mayúsculas; el id de reserva hace que "Familia" y " familia " coincidan.
-// El id es el UTF-8 en hexadecimal del nombre en minúsculas: siempre es un id de documento válido
-// y firestore.rules lo recalcula con name.lower().toUtf8().toHexString().lower().
+// El id es el UTF-8 en hexadecimal del nombre en minúsculas: siempre es un id de documento válido.
+// firestore.rules solo comprueba el formato, porque su lower() únicamente convierte A-Z.
 export function normalizeGroupName(rawName) {
   const name = rawName.normalize('NFC').replace(ZERO_WIDTH, '').trim().replace(/\s+/g, ' ')
   const bytes = new TextEncoder().encode(name.toLowerCase())

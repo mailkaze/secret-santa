@@ -8,6 +8,7 @@ import AppProviders from './components/AppProviders'
 import Login from './components/Login'
 import SignUp from './components/SignUp'
 import Dashboard from './components/Dashboard'
+import NavBar from './components/NavBar'
 
 const authMocks = vi.hoisted(() => ({
   auth: { currentUser: null },
@@ -59,7 +60,10 @@ vi.mock('./services', () => ({
     return () => { listener.active = false }
   },
   getUsers: async uids => uids.map(uid => ({ uid, name: `Nombre ${uid}`, email: `${uid}@example.com` })),
-  getReceiver: async () => ({ uid: 'bea', name: 'Nombre bea', wish: 'Calcetines' }),
+  getReceiver: async () => {
+    if (serviceMocks.receiverOffline) throw new Error('offline')
+    return { uid: 'bea', name: 'Nombre bea', wish: 'Calcetines' }
+  },
   getOwnRating: async () => null,
   createUserProfile: serviceMocks.createUserProfile,
   startShuffleStage: serviceMocks.startShuffleStage,
@@ -84,6 +88,7 @@ beforeEach(() => {
   Object.values(serviceMocks).forEach(mock => mock?.mockReset?.())
   serviceMocks.wishes = { ana: 'Un libro' }
   serviceMocks.wishListeners = {}
+  serviceMocks.receiverOffline = false
   consoleError = vi.spyOn(console, 'error')
   vi.spyOn(window, 'confirm')
 })
@@ -253,6 +258,24 @@ describe('dashboard', () => {
     expect(screen.getByText('Una bufanda')).toBeInTheDocument()
     expect(screen.getByText('¡Bien hecho!')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ya he recibido mi regalo' })).toBeInTheDocument()
+  })
+
+  test('lets the member retry when their draw cannot be loaded', async () => {
+    serviceMocks.receiverOffline = true
+    renderDashboard({
+      id: 'g1', name: 'Familia', admin: 'bea', users: ['ana', 'bea', 'carlos'], requests: [],
+      shuffleStage: true, shufflers: ['ana'],
+    })
+    const retry = await screen.findByRole('button', { name: 'Reintentar' })
+    serviceMocks.receiverOffline = false
+    await userEvent.setup().click(retry)
+    expect(await screen.findByRole('heading', { name: 'Nombre bea' })).toBeInTheDocument()
+  })
+
+  test('the app bar login link keeps the way back to an invite link', async () => {
+    window.history.replaceState(null, '', '/#/grupo/g1')
+    renderWithProviders(<NavBar />)
+    expect(screen.getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '#/entrar?volver=%2Fgrupo%2Fg1')
   })
 
   test('the admin cannot start the draw alone', async () => {

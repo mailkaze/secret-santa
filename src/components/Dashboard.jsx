@@ -150,6 +150,9 @@ function MemberDashboard({ group }) {
   const shufflers = group.shufflers ?? []
   const hasShuffled = shuffleStage && shufflers.includes(uid)
 
+  // attempt sube con "Reintentar" para volver a pedir el destinatario si la carga falló
+  const [receiverLoad, setReceiverLoad] = useState({ attempt: 0, failed: false })
+
   useEffect(() => {
     if (!hasShuffled) return
     let active = true
@@ -158,13 +161,14 @@ function MemberDashboard({ group }) {
       .catch(() => {
         if (!active) return
         setRevealPending(false)
+        setReceiverLoad(load => ({ ...load, failed: true }))
         dispatch(notify('error', GENERIC_ERROR))
       })
     return () => {
       active = false
       setReceiver(null)
     }
-  }, [hasShuffled, group.id, uid, dispatch])
+  }, [hasShuffled, group.id, uid, dispatch, receiverLoad.attempt])
 
   // El deseo de quien te toca se escucha en directo por si lo cambia después del sorteo
   const receiverUid = receiver?.uid
@@ -281,6 +285,16 @@ function MemberDashboard({ group }) {
             sx={{ bgcolor: colors.snow, color: colors.navy, fontSize: '1.25rem', px: 4, '&:hover': { bgcolor: '#ffffff' } }}
           >
             Sortear
+          </Button>
+        </Card>
+      )
+    }
+    if (!receiver && receiverLoad.failed) {
+      return (
+        <Card component="section" aria-label="Tu sorteo" sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Typography>No se ha podido cargar tu sorteo.</Typography>
+          <Button variant="outlined" onClick={() => setReceiverLoad(load => ({ attempt: load.attempt + 1, failed: false }))}>
+            Reintentar
           </Button>
         </Card>
       )

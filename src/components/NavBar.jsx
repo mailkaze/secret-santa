@@ -9,7 +9,7 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import { auth } from '../firebase'
 import { notify } from '../redux/actions'
 import { GENERIC_ERROR } from '../utils'
-import { navigate } from './routing'
+import { authHref, navigate, useRoute } from './routing'
 
 // En pantallas muy estrechas el botón pierde el icono para que quepa junto al nombre
 const barButtonSx = {
@@ -22,6 +22,9 @@ const barButtonSx = {
 export default function NavBar() {
   const isLoggedIn = useSelector(state => state.user !== null)
   const dispatch = useDispatch()
+  const route = useRoute()
+  // Al entrar desde un enlace de invitación se vuelve a ese grupo
+  const returnTo = route.name === 'group' ? route.path : route.returnTo
 
   async function logout() {
     // Primero se va al inicio para no enseñar la pantalla de acceso del grupo que estaba abierto
@@ -50,7 +53,7 @@ export default function NavBar() {
         </Box>
         {isLoggedIn
           ? <Button color="inherit" startIcon={<LogoutIcon />} onClick={logout} sx={barButtonSx}>Cerrar sesión</Button>
-          : <Button color="inherit" href="#/entrar" sx={barButtonSx}>Iniciar sesión</Button>}
+          : <Button color="inherit" href={authHref('/entrar', returnTo)} sx={barButtonSx}>Iniciar sesión</Button>}
       </Toolbar>
     </AppBar>
   )

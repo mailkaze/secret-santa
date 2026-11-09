@@ -16,7 +16,14 @@ export function parseRoute(hash) {
   const [path, query = ''] = hash.replace(/^#/, '').split('?')
   const returnTo = safeReturn(new URLSearchParams(query).get('volver'))
   const groupMatch = path.match(GROUP_PATH)
-  if (groupMatch) return { name: 'group', path, groupId: decodeURIComponent(groupMatch[1]) }
+  if (groupMatch) {
+    // Un enlace escrito a mano con un % mal formado lleva al inicio en vez de romper la app
+    try {
+      return { name: 'group', path, groupId: decodeURIComponent(groupMatch[1]) }
+    } catch {
+      return { name: 'home' }
+    }
+  }
   if (path === '/entrar') return { name: 'login', returnTo }
   if (path === '/registro') return { name: 'signup', returnTo }
   return { name: 'home' }
