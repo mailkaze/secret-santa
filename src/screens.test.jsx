@@ -199,6 +199,21 @@ describe('sign up', () => {
     expect(serviceMocks.createUserProfile).toHaveBeenLastCalledWith('ana', 'Ana', 'ana@example.com')
     await waitFor(() => expect(window.location.hash).toBe('#/grupo/g1'))
   })
+
+  test('a late profile confirmation does not pull the user back after they moved on', async () => {
+    authMocks.createUser.mockImplementation(async (auth, email) => ({ user: { uid: 'ana', email } }))
+    let confirmProfile
+    serviceMocks.createUserProfile.mockImplementation(() => new Promise(resolve => { confirmProfile = resolve }))
+    window.history.replaceState(null, '', '/#/registro')
+    renderWithProviders(<SignUp returnTo="/" />)
+    const user = userEvent.setup()
+    await fillSignUp(user)
+    await user.click(screen.getByRole('button', { name: 'Crear cuenta' }))
+    await waitFor(() => expect(serviceMocks.createUserProfile).toHaveBeenCalled())
+    act(() => { window.location.hash = '/grupo/g9' })
+    await act(async () => confirmProfile())
+    expect(window.location.hash).toBe('#/grupo/g9')
+  })
 })
 
 describe('dashboard', () => {

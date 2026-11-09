@@ -37,9 +37,11 @@ export async function getUsers(uids) {
 }
 
 export function subscribeToUser(uid, onChange) {
-  return onSnapshot(doc(db, 'users', uid), snapshot => {
-    // Durante el registro el documento aún no existe
-    if (snapshot.exists()) onChange({ ...snapshot.data(), uid })
+  // Solo se informa del perfil cuando el servidor lo ha confirmado: así el registro no termina
+  // antes de tiempo y nadie lee un perfil que aún no existe en el servidor.
+  // includeMetadataChanges hace que llegue el aviso de confirmación aunque los datos no cambien.
+  return onSnapshot(doc(db, 'users', uid), { includeMetadataChanges: true }, snapshot => {
+    if (snapshot.exists() && !snapshot.metadata.hasPendingWrites) onChange({ ...snapshot.data(), uid })
   }, ignoreError)
 }
 

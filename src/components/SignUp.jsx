@@ -55,6 +55,8 @@ export default function SignUp({ returnTo }) {
       return
     }
     setSubmitting(true)
+    // Si el usuario ya se ha ido a otra pantalla cuando llega la confirmación, no se le devuelve
+    const startHash = window.location.hash
     try {
       let account
       try {
@@ -69,6 +71,7 @@ export default function SignUp({ returnTo }) {
         dispatch(notify('error', PROFILE_ERROR))
         return
       }
+      if (window.location.hash !== startHash) return
       dispatch(notify('success', `¡Te damos la bienvenida, ${form.name.trim()}!`))
       navigate(returnTo, { replace: true })
     } finally {
